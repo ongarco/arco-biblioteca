@@ -620,11 +620,129 @@
         function closeCameraCapture() { if (cameraCaptureStream) { cameraCaptureStream.getTracks().forEach(track => track.stop()); cameraCaptureStream = null; } document.getElementById('modal-camera-capture').classList.remove('active'); }
         function takePhotoAndAnalyze() { const video = document.getElementById('camera-video'); const canvas = document.getElementById('camera-canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height); const base64Str = canvas.toDataURL('image/jpeg'); closeCameraCapture(); processGeminiAnalysis(base64Str.split(',')[1], 'image/jpeg'); }
 
-        // --- GEMINI IA INTEGRAÇÃO ---
-        async function fileToBase64Promise(file) { return new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res(r.result); r.onerror = e => rej(e); }); }
-        async function startAiAnalysisFromFile() { const fileInput = document.getElementById('ai-catalog-file'); if(!fileInput.files[0]) return alert("Selecione a foto no ficheiro."); const base64Str = await fileToBase64Promise(fileInput.files[0]); processGeminiAnalysis(base64Str.split(',')[1], fileInput.files[0].type); }
-        async function processGeminiAnalysis(base64Data, mimeType) {
-            const apiKey = database.config.geminiKey; if(!apiKey) { alert("Configure a API Key do Google Gemini nas Configurações."); switchTab('config'); return; }
-            const status = document.getElementById('ai-status'); status.innerText = "A analisar ficha com Inteligência Artificial..."; status.style.color = "#f39c12";
-            try { const prompt = `Extraia as informações da ficha catalográfica e retorne APENAS um JSON puro (sem markdown ou \`\`\`json): {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`; const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }] }) }); const result = await res.json(); if(result.error) throw new Error(result.error.message); let txt = result.candidates[0].content.parts[0].text; txt = txt.replace(/
-http://googleusercontent.com/immersive_entry_chip/0
+       // --- GEMINI IA INTEGRAÇÃO ---
+async function fileToBase64Promise(file) {
+    return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.readAsDataURL(file);
+        r.onload = () => res(r.result);
+        r.onerror = e => rej(e);
+    });
+}
+
+async function startAiAnalysisFromFile() {
+    const fileInput = document.getElementById('ai-catalog-file');
+
+    if (!fileInput.files[0]) {
+        return alert("Selecione a foto no ficheiro.");
+    }
+
+    const base64Str = await fileToBase64Promise(fileInput.files[0]);
+
+    processGeminiAnalysis(
+        base64Str.split(',')[1],
+        fileInput.files[0].type
+    );
+}
+
+async function processGeminiAnalysis(base64Data, mimeType) {
+
+    const apiKey = database.config.geminiKey;
+
+    if (!apiKey) {
+        alert("Configure a API Key do Google Gemini nas Configurações.");
+        switchTab('config');
+        return;
+    }
+
+    const status = document.getElementById('ai-status');
+
+    status.innerText = "A analisar ficha com Inteligência Artificial...";
+    status.style.color = "#f39c12";
+
+    try {
+
+        const prompt = `Extraia as informações da ficha catalográfica e retorne APENAS um JSON puro (sem markdown):
+
+{
+  "titulo": "",
+  "autor": "",
+  "editora": "",
+  "ano": "",
+  "isbn": "",
+  "categoria": ""
+}`;
+
+        const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [
+                            {
+                                text: prompt
+                            },
+                            {
+                                inlineData: {
+                                    mimeType: mimeType,
+                                    data: base64Data
+                                }
+                            }
+                        ]
+                    }]
+                })
+            }
+        );
+
+        const result = await res.json();
+
+        if (result.error) {
+            throw new Error(result.error.message);
+        }
+
+        let txt = result.candidates[0].content.parts[0].text || '';
+
+        txt = txt.replace(/```json/gi, '');
+        txt = txt.replace(/```/g, '');
+        txt = txt.trim();
+
+        const dados = JSON.parse(txt);
+
+        if (document.getElementById('book-title'))
+            document.getElementById('book-title').value = dados.titulo || '';
+
+        if (document.getElementById('book-author'))
+            document.getElementById('book-author').value = dados.autor || '';
+
+        if (document.getElementById('book-publisher'))
+            document.getElementById('book-publisher').value = dados.editora || '';
+
+        if (document.getElementById('book-year'))
+            document.getElementById('book-year').value = dados.ano || '';
+
+        if (document.getElementById('book-isbn'))
+            document.getElementById('book-isbn').value = dados.isbn || '';
+
+        if (document.getElementById('book-category'))
+            document.getElementById('book-category').value = dados.categoria || '';
+
+        status.innerText = "Análise concluída com sucesso!";
+        status.style.color = "#27ae60";
+
+    } catch (err) {
+
+        console.error(err);
+
+        status.innerText = "Erro na análise da imagem.";
+        status.style.color = "#e74c3c";
+
+        alert(
+            "Não foi possível analisar a imagem.\n\n" +
+            (err.message || err)
+        );
+    }
+}
