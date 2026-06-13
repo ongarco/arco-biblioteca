@@ -599,26 +599,84 @@
 
         function buscarCEP(cep) { let cepLimpo = cep.replace(/\D/g, ''); if (cepLimpo.length === 8) { document.getElementById('cep-feedback').innerText = "Buscando..."; document.getElementById('cep-feedback').style.color = "#f39c12"; fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(res => res.json()).then(data => { if (!data.erro) { document.getElementById('u-rua').value = data.logradouro; document.getElementById('u-bairro').value = data.bairro; document.getElementById('u-cidade').value = data.localidade; document.getElementById('u-estado').value = data.uf; document.getElementById('cep-feedback').innerText = "Encontrado!"; document.getElementById('cep-feedback').style.color = "#18BC9C"; } else { document.getElementById('cep-feedback').innerText = "Não localizado."; document.getElementById('cep-feedback').style.color = "#e74c3c"; } }).catch(err => { document.getElementById('cep-feedback').innerText = "Erro."; document.getElementById('cep-feedback').style.color = "#e74c3c"; }); } }
 
-       function applyConfig() {
-            const r = document.documentElement.style; r.setProperty('--primary', document.getElementById('cfg-c-primary').value); r.setProperty('--secondary', document.getElementById('cfg-c-secondary').value); r.setProperty('--bg', document.getElementById('cfg-c-bg').value); r.setProperty('--panel-bg', document.getElementById('cfg-c-panel').value); r.setProperty('--text', document.getElementById('cfg-c-text').value); r.setProperty('--header-text', document.getElementById('cfg-c-htext').value);
-            document.getElementById('system-title-display').innerText = document.getElementById('cfg-title').value;
-            const sub = document.getElementById('system-subtitle-display'); sub.innerText = document.getElementById('cfg-subtitle').value; sub.style.display = document.getElementById('cfg-show-subtitle').checked ? 'block' : 'none';
-            const logo = document.getElementById('cfg-logo').value; if(logo) document.getElementById('system-logo-display').src = logo;
-            const banner = document.getElementById('cfg-banner').value; if(banner) document.getElementById('system-banner').style.backgroundImage = `url('${banner}')`;
+     function applyConfig() {
+            const r = document.documentElement.style; 
+            const getVal = id => document.getElementById(id) ? document.getElementById(id).value : '';
             
-            const bgDesk = document.getElementById('cfg-bg-login-desk').value; if(bgDesk) r.setProperty('--bg-login-desk', `url('${bgDesk}')`); else r.removeProperty('--bg-login-desk');
-            const bgMob = document.getElementById('cfg-bg-login-mob').value; if(bgMob) r.setProperty('--bg-login-mob', `url('${bgMob}')`); else r.removeProperty('--bg-login-mob');
+            r.setProperty('--primary', getVal('cfg-c-primary') || '#2C3E50'); 
+            r.setProperty('--secondary', getVal('cfg-c-secondary') || '#18BC9C'); 
+            r.setProperty('--bg', getVal('cfg-c-bg') || '#F4F6F9'); 
+            r.setProperty('--panel-bg', getVal('cfg-c-panel') || '#ffffff'); 
+            r.setProperty('--text', getVal('cfg-c-text') || '#333333'); 
+            r.setProperty('--header-text', getVal('cfg-c-htext') || '#ffffff');
+            
+            const titleEl = document.getElementById('system-title-display');
+            if(titleEl) titleEl.innerText = getVal('cfg-title');
+            
+            const sub = document.getElementById('system-subtitle-display'); 
+            if(sub) {
+                sub.innerText = getVal('cfg-subtitle'); 
+                const chk = document.getElementById('cfg-show-subtitle');
+                sub.style.display = (chk && chk.checked) ? 'block' : 'none';
+            }
+            
+            const logo = getVal('cfg-logo'); const logoImg = document.getElementById('system-logo-display');
+            if(logo && logoImg) logoImg.src = logo;
+            
+            const banner = getVal('cfg-banner'); const bannerEl = document.getElementById('system-banner');
+            if(banner && bannerEl) bannerEl.style.backgroundImage = `url('${banner}')`;
+            
+            const bgDesk = getVal('cfg-bg-login-desk'); 
+            if(bgDesk) r.setProperty('--bg-login-desk', `url('${bgDesk}')`); else r.removeProperty('--bg-login-desk');
+            
+            const bgMob = getVal('cfg-bg-login-mob'); 
+            if(bgMob) r.setProperty('--bg-login-mob', `url('${bgMob}')`); else r.removeProperty('--bg-login-mob');
         }
+
         function loadConfigAndApply() {
-            const c = database.config; document.getElementById('cfg-title').value = c.title || 'Biblioteca Corporativa Arco'; document.getElementById('cfg-subtitle').value = c.subtitle !== undefined ? c.subtitle : 'Sistema Inteligente de Controle'; document.getElementById('cfg-show-subtitle').checked = c.showSubtitle !== undefined ? c.showSubtitle : true; document.getElementById('cfg-gemini-key').value = c.geminiKey || '';
-            const isValidHex = (h) => /^#[0-9A-F]{6}$/i.test(h); document.getElementById('cfg-c-primary').value = isValidHex(c.primary) ? c.primary : '#2C3E50'; document.getElementById('cfg-c-secondary').value = isValidHex(c.secondary) ? c.secondary : '#18BC9C'; document.getElementById('cfg-c-bg').value = isValidHex(c.bg) ? c.bg : '#F4F6F9'; document.getElementById('cfg-c-panel').value = isValidHex(c.panel) ? c.panel : '#ffffff'; document.getElementById('cfg-c-text').value = isValidHex(c.text) ? c.text : '#333333'; document.getElementById('cfg-c-htext').value = isValidHex(c.htext) ? c.htext : '#ffffff';
+            const c = database.config || {}; 
+            const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
             
-            document.getElementById('cfg-logo').value = c.logo || ''; document.getElementById('cfg-banner').value = c.banner || ''; document.getElementById('cfg-moldura').value = c.moldura || ''; document.getElementById('cfg-logo-arco').value = c.logoArco || ''; document.getElementById('cfg-logo-biblio').value = c.logoBiblio || ''; document.getElementById('cfg-show-qr').value = c.showQRCarteirinha !== false ? "true" : "false"; 
-            document.getElementById('cfg-bg-login-desk').value = c.bgLoginDesk || ''; document.getElementById('cfg-bg-login-mob').value = c.bgLoginMob || ''; applyConfig();
+            setVal('cfg-title', c.title || 'Biblioteca Corporativa Arco'); 
+            setVal('cfg-subtitle', c.subtitle !== undefined ? c.subtitle : 'Sistema Inteligente de Controle'); 
+            const chk = document.getElementById('cfg-show-subtitle');
+            if(chk) chk.checked = c.showSubtitle !== undefined ? c.showSubtitle : true; 
+            
+            setVal('cfg-gemini-key', c.geminiKey || '');
+            
+            const isValidHex = (h) => /^#[0-9A-F]{6}$/i.test(h); 
+            setVal('cfg-c-primary', isValidHex(c.primary) ? c.primary : '#2C3E50'); 
+            setVal('cfg-c-secondary', isValidHex(c.secondary) ? c.secondary : '#18BC9C'); 
+            setVal('cfg-c-bg', isValidHex(c.bg) ? c.bg : '#F4F6F9'); 
+            setVal('cfg-c-panel', isValidHex(c.panel) ? c.panel : '#ffffff'); 
+            setVal('cfg-c-text', isValidHex(c.text) ? c.text : '#333333'); 
+            setVal('cfg-c-htext', isValidHex(c.htext) ? c.htext : '#ffffff');
+            
+            setVal('cfg-logo', c.logo || ''); setVal('cfg-banner', c.banner || ''); setVal('cfg-moldura', c.moldura || ''); 
+            setVal('cfg-logo-arco', c.logoArco || ''); setVal('cfg-logo-biblio', c.logoBiblio || ''); 
+            setVal('cfg-show-qr', c.showQRCarteirinha !== false ? "true" : "false"); 
+            setVal('cfg-bg-login-desk', c.bgLoginDesk || ''); setVal('cfg-bg-login-mob', c.bgLoginMob || ''); 
+            
+            applyConfig();
         }
+
         function saveConfig() { 
-            database.config = { title: document.getElementById('cfg-title').value, subtitle: document.getElementById('cfg-subtitle').value, showSubtitle: document.getElementById('cfg-show-subtitle').checked, geminiKey: document.getElementById('cfg-gemini-key').value, primary: document.getElementById('cfg-c-primary').value, secondary: document.getElementById('cfg-c-secondary').value, bg: document.getElementById('cfg-c-bg').value, panel: document.getElementById('cfg-c-panel').value, text: document.getElementById('cfg-c-text').value, htext: document.getElementById('cfg-c-htext').value, logo: document.getElementById('cfg-logo').value, banner: document.getElementById('cfg-banner').value, moldura: document.getElementById('cfg-moldura').value, logoArco: document.getElementById('cfg-logo-arco').value, logoBiblio: document.getElementById('cfg-logo-biblio').value, showQRCarteirinha: document.getElementById('cfg-show-qr').value === "true", bgLoginDesk: document.getElementById('cfg-bg-login-desk').value, bgLoginMob: document.getElementById('cfg-bg-login-mob').value }; 
-            syncDB(); alert('Configurações Salvas com Sucesso!'); 
+            const getVal = id => document.getElementById(id) ? document.getElementById(id).value : '';
+            const chk = document.getElementById('cfg-show-subtitle');
+            
+            database.config = { 
+                title: getVal('cfg-title'), subtitle: getVal('cfg-subtitle'), 
+                showSubtitle: chk ? chk.checked : true, 
+                geminiKey: getVal('cfg-gemini-key').trim(), 
+                primary: getVal('cfg-c-primary'), secondary: getVal('cfg-c-secondary'), 
+                bg: getVal('cfg-c-bg'), panel: getVal('cfg-c-panel'), text: getVal('cfg-c-text'), htext: getVal('cfg-c-htext'), 
+                logo: getVal('cfg-logo'), banner: getVal('cfg-banner'), moldura: getVal('cfg-moldura'), 
+                logoArco: getVal('cfg-logo-arco'), logoBiblio: getVal('cfg-logo-biblio'), 
+                showQRCarteirinha: getVal('cfg-show-qr') === "true", 
+                bgLoginDesk: getVal('cfg-bg-login-desk'), bgLoginMob: getVal('cfg-bg-login-mob') 
+            }; 
+            syncDB(); 
+            alert('Configurações Salvas com Sucesso!'); 
         }
 
         async function saveUser(e) {
