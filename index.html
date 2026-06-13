@@ -522,6 +522,7 @@
                 if(data.books && data.books.length > 0) database.books = data.books;
                 if(data.loans && data.loans.length > 0) database.loans = data.loans;
                 if(data.sysAccess && data.sysAccess.length > 0) database.sysAccess = data.sysAccess;
+                if(data.config && Object.keys(data.config).length > 0) { database.config = data.config; loadConfigAndApply(); }
                 syncDB();
                 updateDashboardCounters(); renderUsersTable(); renderBooksTable(); renderLoansSection(); renderSysUsersList();
             } catch(e) {
@@ -660,7 +661,7 @@
             applyConfig();
         }
 
-        function saveConfig() { 
+      async function saveConfig() { 
             const getVal = id => document.getElementById(id) ? document.getElementById(id).value : '';
             const chk = document.getElementById('cfg-show-subtitle');
             
@@ -676,7 +677,8 @@
                 bgLoginDesk: getVal('cfg-bg-login-desk'), bgLoginMob: getVal('cfg-bg-login-mob') 
             }; 
             syncDB(); 
-            alert('Configurações Salvas com Sucesso!'); 
+            await cloudSave('saveConfig', database.config);
+            alert('Identidade Visual Salva na Nuvem com Sucesso!'); 
         }
 
         async function saveUser(e) {
