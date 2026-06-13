@@ -182,12 +182,13 @@
     <div class="container">
         <div id="panel-dashboard" class="panel active">
             <h2 class="section-title">Painel de Indicadores</h2>
-            <div class="dashboard-cards">
+           <div class="dashboard-cards">
                 <div class="card"><h3>Leitores Ativos</h3><p id="dash-users">0</p></div>
                 <div class="card" style="border-top-color: #3498db;"><h3>Títulos (Obras)</h3><p id="dash-unique-titles">0</p></div>
                 <div class="card"><h3>Total Físico</h3><p id="dash-total-books">0</p></div>
                 <div class="card" style="border-top-color: #27ae60;"><h3>Disponíveis</h3><p id="dash-avail-books">0</p></div>
-                <div class="card" style="border-top-color: #e67e22;"><h3>Emprestados</h3><p id="dash-borrowed-books">0</p></div>
+                <div class="card" style="border-top-color: #e67e22;"><h3>Emprestados Atuais</h3><p id="dash-borrowed-books">0</p></div>
+                <div class="card" style="border-top-color: #9b59b6;"><h3>Total de Empréstimos</h3><p id="dash-total-loans">0</p></div>
                 <div class="card" style="border-top-color: #e74c3c;"><h3>Em Atraso</h3><p id="dash-late-books">0</p></div>
             </div>
             <div class="dashboard-layout">
@@ -484,7 +485,7 @@
                                 <span style="font-size:7px; font-weight:bold; margin-top:2px; color:#333;">SCAN-ME</span>
                             </div>
                         </div>
-                        <div class="carteirinha-dados">
+                       <div class="carteirinha-dados">
                             <div class="carteirinha-campo carteirinha-nome"><strong style="font-size:8px;">Leitor(a)</strong><span id="card-nome"></span></div>
                             <div class="carteirinha-campo"><strong>ID do Sistema</strong><span id="card-id" style="font-family:monospace; font-weight:bold;"></span></div>
                             <div class="carteirinha-campo"><strong>WhatsApp</strong><span id="card-whatsapp"></span></div>
@@ -496,6 +497,31 @@
                         </div>
                     </div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportCarteirinhaPDF()">🪪 Salvar Carteirinha 10x6.9cm</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-carteirinha')">Fechar</button></div></div></div>
 
+    <div id="modal-perfil-leitor" class="preview-overlay">
+        <div class="preview-box" style="max-width: 800px;">
+            <h3 style="color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 10px;">Perfil e Histórico do Leitor</h3>
+            <div style="display: flex; gap: 20px; text-align: left; margin-bottom: 20px; flex-wrap: wrap;">
+                <img id="perfil-foto" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 3px solid var(--primary);">
+                <div>
+                    <h4 id="perfil-nome" style="margin: 0 0 5px 0; font-size: 20px;"></h4>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>ID:</strong> <span id="perfil-id"></span></p>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>Contato:</strong> <span id="perfil-contato"></span></p>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>Endereço:</strong> <span id="perfil-endereco"></span></p>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>Status:</strong> <span id="perfil-status"></span></p>
+                </div>
+            </div>
+            <h4 style="text-align: left; margin-bottom: 10px; color: var(--primary);">Histórico de Empréstimos</h4>
+            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table style="font-size: 12px;">
+                    <thead><tr><th>ID</th><th>Livro</th><th>Retirada</th><th>Devolução Prev.</th><th>Devolução Real</th><th>Status</th></tr></thead>
+                    <tbody id="perfil-historico-body"></tbody>
+                </table>
+            </div>
+            <div class="preview-actions">
+                <button class="btn btn-danger" onclick="closeModal('modal-perfil-leitor')">Fechar Perfil</button>
+            </div>
+        </div>
+    </div>
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbyjDxHo4_XWh1_71djbwkDsYO8G6-MOmf6KfLr7ht0uEWKAekCLNKvtqVjiStmmPTvefw/exec";
         let loggedInOperator = '';
@@ -740,8 +766,29 @@
         }
         function editUser(id) { const u = database.users.find(x => x.ID_Usuario === id); if(!u) return; document.getElementById('editing-user-id').value = id; document.getElementById('form-user-title').innerText = "Editar Usuário Existente"; document.getElementById('btn-submit-user').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-user').classList.add('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'inline-block'; document.getElementById('u-nome').value = u.Nome_Completo; document.getElementById('u-email').value = u.Email; document.getElementById('u-whatsapp').value = u.Telefone_WhatsApp; document.getElementById('u-cep').value = u.Endereco_CEP; document.getElementById('u-rua').value = u.Endereco_Rua; document.getElementById('u-numero').value = u.Endereco_Numero; document.getElementById('u-bairro').value = u.Endereco_Bairro; document.getElementById('u-cidade').value = u.Endereco_Cidade; document.getElementById('u-estado').value = u.Endereco_Estado; const setD = (eid, v) => { const el = document.getElementById(eid); if(v && !Array.from(el.options).some(o=>o.value===v)){ const opt=document.createElement('option'); opt.value=v; opt.innerText=v; el.appendChild(opt);} el.value = v; }; setD('u-genero', u.Identidade_Genero); setD('u-orientacao', u.Orientacao_Sexual); setD('u-raca', u.Raca_Etnia); setD('u-escolaridade', u.Escolaridade); document.getElementById('u-cadunico').value = u.Programas_Governo_CADUnico; document.getElementById('u-nivel').value = u.Nivel_Acesso; document.getElementById('u-status').value = u.Status; window.scrollTo(0,0); }
         function cancelEditUser() { document.getElementById('editing-user-id').value = ''; document.getElementById('form-user-title').innerText = "Cadastrar Novo Usuário"; document.getElementById('btn-submit-user').innerText = "Cadastrar Usuário"; document.getElementById('btn-submit-user').classList.remove('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'none'; document.getElementById('form-user').reset(); }
-        function renderUsersTable() { const t = document.getElementById('table-users-body'); const s = document.getElementById('search-user-input').value.toLowerCase(); t.innerHTML = ''; database.users.filter(u => u.Nome_Completo.toLowerCase().includes(s) || u.ID_Usuario.toLowerCase().includes(s)).forEach(u => { const img = u.Foto ? `<img class="row-avatar" src="${u.Foto}">` : `<div class="row-avatar" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${u.ID_Usuario}</td><td><strong>${u.Nome_Completo}</strong></td><td>${u.Telefone_WhatsApp}</td><td><span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span></td><td style="text-align:center;"><button class="btn btn-sm" onclick="openCarteirinhaModal('${u.ID_Usuario}')">🪪 Cartão</button> <button class="btn btn-sm btn-edit" onclick="editUser('${u.ID_Usuario}')">✏️ Editar</button></td></tr>`; }); }
-
+        function renderUsersTable() { const t = document.getElementById('table-users-body'); const s = document.getElementById('search-user-input').value.toLowerCase(); t.innerHTML = ''; database.users.filter(u => u.Nome_Completo.toLowerCase().includes(s) || u.ID_Usuario.toLowerCase().includes(s)).forEach(u => { const img = u.Foto ? `<img class="row-avatar" src="${u.Foto}">` : `<div class="row-avatar" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${u.ID_Usuario}</td><td><strong>${u.Nome_Completo}</strong></td><td>${u.Telefone_WhatsApp}</td><td><span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span></td><td style="text-align:center; display:flex; gap:5px; justify-content:center;"><button class="btn btn-sm" style="background:#3498db;" onclick="openUserProfile('${u.ID_Usuario}')">👤 Perfil</button> <button class="btn btn-sm" onclick="openCarteirinhaModal('${u.ID_Usuario}')">🪪 Cartão</button> <button class="btn btn-sm btn-edit" onclick="editUser('${u.ID_Usuario}')">✏️ Editar</button></td></tr>`; }); }
+        
+        function openUserProfile(id) {
+            const u = database.users.find(x => x.ID_Usuario === id); if(!u) return;
+            document.getElementById('perfil-foto').src = u.Foto ? u.Foto : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='grey'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-3.3c-8-3.3z'/></svg>";
+            document.getElementById('perfil-nome').innerText = u.Nome_Completo;
+            document.getElementById('perfil-id').innerText = u.ID_Usuario;
+            document.getElementById('perfil-contato').innerText = `${u.Telefone_WhatsApp} / ${u.Email}`;
+            document.getElementById('perfil-endereco').innerText = `${u.Endereco_Rua}, ${u.Endereco_Numero} - ${u.Endereco_Bairro}, ${u.Endereco_Cidade}/${u.Endereco_Estado}`;
+            document.getElementById('perfil-status').innerHTML = `<span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span>`;
+            
+            const t = document.getElementById('perfil-historico-body'); t.innerHTML = '';
+            const userLoans = database.loans.filter(l => l.ID_Usuario === id).reverse();
+            if (userLoans.length === 0) { t.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhum empréstimo registrado.</td></tr>'; }
+            else {
+                userLoans.forEach(l => {
+                    const b = database.books.find(x => x.ID_Livro === l.ID_Livro);
+                    const isDev = l.Status_Emprestimo === 'Devolvido';
+                    t.innerHTML += `<tr><td style="font-family:monospace;">${l.ID_Emprestimo}</td><td>${b?b.Titulo:'Obra Removida'}</td><td>${l.Data_Retirada}</td><td>${l.Data_Prevista_Devolucao}</td><td style="color:${isDev?'#18BC9C':'-'}; font-weight:bold;">${l.Data_Entrega_Real || '-'}</td><td><span class="badge ${isDev?'badge-ativo':'badge-pendente'}">${l.Status_Emprestimo}</span></td></tr>`;
+                });
+            }
+            document.getElementById('modal-perfil-leitor').classList.add('active');
+        }
         async function saveBook(e) {
             e.preventDefault(); const editId = document.getElementById('editing-book-id').value; const qty = parseInt(document.getElementById('l-quantidade').value);
             let obj = { Titulo: document.getElementById('l-titulo').value, Autor: document.getElementById('l-autor').value, Editora: document.getElementById('l-editora').value, Ano: document.getElementById('l-ano').value, Categoria: document.getElementById('l-categoria').value, ISBN: document.getElementById('l-isbn').value, Quantidade_Total: qty, Foto_Capa: document.getElementById('l-foto-b64').value };
@@ -787,12 +834,13 @@
             syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); document.getElementById('form-loan').reset(); setDefaultLoanDate(); showComprovante('EMPRÉSTIMO DE LIVRO', u.Nome_Completo, u.ID_Usuario, b.Titulo, today, dp, null, op);
         }
         async function registerReturn(id) {
-            const lIdx = database.loans.findIndex(x => x.ID_Emprestimo === id); if(lIdx === -1) return; const l = database.loans[lIdx]; const b = database.books.find(x => x.ID_Livro === l.ID_Livro); const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); if(b) b.Estoque_Atual++;
+            const lIdx = database.loans.findIndex(x => x.ID_Emprestimo === id); if(lIdx === -1) return; const l = database.loans[lIdx]; const b = database.books.find(x => x.ID_Livro === l.ID_Livro); const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); 
+            if(b && b.Estoque_Atual < b.Quantidade_Total) b.Estoque_Atual++; 
             const today = new Date().toLocaleDateString('pt-BR'); const op = loggedInOperator || 'admin';
             l.Status_Emprestimo = 'Devolvido'; l.Data_Entrega_Real = today;
             database.fluxo.unshift({ data: today, operacao: 'ENTRADA (Devolução)', livro: b?b.Titulo:'-', usuario: u?u.Nome_Completo:'-', responsavel: op }); 
             await cloudSave('saveLoan', l); if(b) await cloudSave('saveBook', b);
-            database.loans.splice(lIdx, 1);
+            
             syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); showComprovante('DEVOLUÇÃO DE LIVRO', u?u.Nome_Completo:'-', u?u.ID_Usuario:'-', b?b.Titulo:'-', l.Data_Retirada, l.Data_Prevista_Devolucao, today, op);
         }
         function showComprovante(tipo, userName, userId, bookName, dtRet, dtPrev, dtEnt, operador) { document.getElementById('comp-tipo').innerText = tipo; document.getElementById('comp-user').innerText = userName; document.getElementById('comp-userid').innerText = userId; document.getElementById('comp-book').innerText = bookName; document.getElementById('comp-operador').innerText = operador; document.getElementById('comp-data-hoje').innerText = dtRet; document.getElementById('comp-data-prev').innerText = dtPrev; document.getElementById('comp-system-date').innerText = new Date().toLocaleString('pt-BR'); const le = document.getElementById('comp-linha-ent'); if(dtEnt) { document.getElementById('comp-data-ent').innerText = dtEnt; le.style.display = 'flex'; } else { le.style.display = 'none'; } document.getElementById('modal-comprovante').classList.add('active'); }
@@ -801,7 +849,7 @@
             let logs = [];
             database.loans.forEach(l => {
                 const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); const b = database.books.find(x => x.ID_Livro === l.ID_Livro);
-                const safeDate = str => { const pts = str.split('/'); return pts.length === 3 ? `${pts[2]}-${pts[1]}-${pts[0]}` : str; };
+                const safeDate = str => { if(!str) return '2000-01-01'; const pts = str.split('/'); return pts.length === 3 ? `${pts[2]}-${pts[1]}-${pts[0]}` : str; };
                 logs.push({ dIso: safeDate(l.Data_Retirada), dataStr: l.Data_Retirada, op: 'SAÍDA (Empréstimo)', liv: b?b.Titulo:'-', usr: u?u.Nome_Completo:'-', resp: l.Operador||'admin' });
                 if(l.Status_Emprestimo === 'Devolvido' && l.Data_Entrega_Real) {
                     logs.push({ dIso: safeDate(l.Data_Entrega_Real), dataStr: l.Data_Entrega_Real, op: 'ENTRADA (Devolução)', liv: b?b.Titulo:'-', usr: u?u.Nome_Completo:'-', resp: l.Operador||'admin' });
@@ -811,8 +859,24 @@
                 t.innerHTML += `<tr><td>${f.dataStr}</td><td><span class="badge ${f.op.includes('SAÍDA')?'badge-atraso':'badge-ativo'}">${f.op}</span></td><td><strong>${f.liv}</strong></td><td>${f.usr}</td><td><span style="color:#7f8c8d; font-weight:bold;">${f.resp}</span></td></tr>`; 
             }); 
         }
-        function updateDashboardCounters() { document.getElementById('dash-users').innerText = database.users.length; document.getElementById('dash-unique-titles').innerText = database.books.length; let tot = 0; let av = 0; database.books.forEach(b => { tot += b.Quantidade_Total; av += b.Estoque_Atual; }); document.getElementById('dash-total-books').innerText = tot; document.getElementById('dash-avail-books').innerText = av; document.getElementById('dash-borrowed-books').innerText = tot - av; }
-
+        function updateDashboardCounters() { 
+            document.getElementById('dash-users').innerText = database.users.length; 
+            document.getElementById('dash-unique-titles').innerText = database.books.length; 
+            
+            let tot = 0; let av = 0; 
+            database.books.forEach(b => { tot += b.Quantidade_Total; av += b.Estoque_Atual; }); 
+            
+            const emprestadosAtuais = database.loans.filter(l => l.Status_Emprestimo === 'Ativo').length;
+            const totalHistorico = database.loans.length;
+            
+            // Lógica ajustada para nunca ficar negativo e respeitar os dois quadros novos
+            document.getElementById('dash-total-books').innerText = tot; 
+            document.getElementById('dash-avail-books').innerText = av; 
+            document.getElementById('dash-borrowed-books').innerText = Math.max(0, emprestadosAtuais); 
+            
+            const dashTotLoans = document.getElementById('dash-total-loans');
+            if(dashTotLoans) dashTotLoans.innerText = totalHistorico;
+        }
         let currentBook = null;
         function openEtiquetaModal(id) { currentBook = database.books.find(x => x.ID_Livro === id); if(!currentBook) return; document.getElementById('lbl-titulo').innerText = currentBook.Titulo; document.getElementById('lbl-autor').innerText = currentBook.Autor; document.getElementById('lbl-editora').innerText = currentBook.Editora; document.getElementById('lbl-ano').innerText = currentBook.Ano; document.getElementById('lbl-isbn').innerText = currentBook.ISBN; document.getElementById('lbl-id').innerText = currentBook.ID_Livro; const cin = document.getElementById('print-copy-num'); cin.max = currentBook.Quantidade_Total; cin.value = 1; document.getElementById('print-copy-total').innerText = ` de ${currentBook.Quantidade_Total}`; updateEtiquetaQR(); document.getElementById('modal-etiqueta').classList.add('active'); }
         function updateEtiquetaQR() { if(!currentBook) return; const n = document.getElementById('print-copy-num').value; document.getElementById('lbl-exemplar-id').innerText = `Exemplar ${n}`; const qrTarget = document.getElementById('qrcode-canvas-book'); qrTarget.innerHTML = ''; new QRCode(qrTarget, { text: `${currentBook.ID_Livro}/${n}`, width: 100, height: 100, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); }
