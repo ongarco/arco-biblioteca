@@ -584,20 +584,57 @@
         async function analyzeCatalogCard() { const fileInput = document.getElementById('ai-catalog-file'); if(!fileInput.files[0]) return alert("Selecione a foto."); const base64Str = await fileToBase64Promise(fileInput.files[0]); processGeminiAnalysis(base64Str.split(',')[1], fileInput.files[0].type); }
         
         async function processGeminiAnalysis(base64Data, mimeType) {
-            const apiKey = database.config.geminiKey; if(!apiKey) { alert("Configure a API Key do Gemini nas Configurações."); switchTab('config'); return; }
-            const status = document.getElementById('ai-status'); status.innerText = "Analisando ficha via Inteligência Artificial... Aguarde..."; status.style.color = "#f39c12";
+            const apiKey = database.config.geminiKey; 
+            if(!apiKey) { alert("Configure a API Key do Gemini nas Configurações."); switchTab('config'); return; }
+            
+            const status = document.getElementById('ai-status'); 
+            status.innerText = "Analisando ficha via Inteligência Artificial... Aguarde..."; 
+            status.style.color = "#f39c12";
+            
             try {
-                const prompt = `Extraia as informações da ficha catalográfica e retorne APENAS um JSON: {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`;
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }] }) });
-                const result = await res.json(); if(result.error) throw new Error(result.error.message);
-                let txt = result.candidates[0].content.parts[0].text; txt = txt.replace(/```json/g, '').replace(/```/g, '').trim(); const data = JSON.parse(txt);
-                document.getElementById('l-titulo').value = data.titulo || ''; document.getElementById('l-autor').value = data.autor || ''; document.getElementById('l-editora').value = data.editora || ''; document.getElementById('l-ano').value = data.ano ? data.ano.toString().replace(/\D/g, '') : ''; document.getElementById('l-isbn').value = data.isbn || '';
-                if(data.categoria) { const catSelect = document.getElementById('l-categoria'); if(!Array.from(catSelect.options).some(o => o.value === data.categoria)) { database.customOptions.categoria.push(data.categoria); syncDB(); populateDynamicDropdowns(); } catSelect.value = data.categoria; }
-                status.innerText = "✨ Dados extraídos! Confira abaixo."; status.style.color = "#18BC9C";
-                const btn = document.getElementById('btn-submit-book'); btn.innerText = "CONFIRMAR E INCLUIR NOVO LIVRO?"; btn.classList.add('active');
-            } catch(e) { status.innerText = "Erro ao processar imagem ou API Key inválida."; status.style.color = "#e74c3c"; }
+                const prompt = `Você é um bibliotecário especialista. Extraia os dados da ficha catalográfica e retorne EXATAMENTE um JSON puro, sem marcações ou crases (NÃO use \`\`\`json), sem explicações extras, APENAS o objeto: {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`;
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, { 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }] }) 
+                });
+                
+                const result = await res.json(); 
+                
+                if(result.error) throw new Error("Erro do Google: " + result.error.message);
+                if(!result.candidates) throw new Error("A IA processou, mas não retornou dados para esta imagem.");
+                
+                let txt = result.candidates[0].content.parts[0].text; 
+                txt = txt.replace(/```json/g, '').replace(/```/g, '').trim(); 
+                
+                let data;
+                try { data = JSON.parse(txt); } catch(err) { throw new Error("A IA leu a foto, mas o texto gerado fugiu do padrão esperado."); }
+                
+                document.getElementById('l-titulo').value = data.titulo || ''; 
+                document.getElementById('l-autor').value = data.autor || ''; 
+                document.getElementById('l-editora').value = data.editora || ''; 
+                document.getElementById('l-ano').value = data.ano ? data.ano.toString().replace(/\D/g, '') : ''; 
+                document.getElementById('l-isbn').value = data.isbn || '';
+                
+                if(data.categoria) { 
+                    const catSelect = document.getElementById('l-categoria'); 
+                    if(!Array.from(catSelect.options).some(o => o.value === data.categoria)) { 
+                        database.customOptions.categoria.push(data.categoria); 
+                        syncDB(); populateDynamicDropdowns(); 
+                    } 
+                    catSelect.value = data.categoria; 
+                }
+                
+                status.innerText = "✨ Dados extraídos! Confira abaixo."; 
+                status.style.color = "#18BC9C";
+                const btn = document.getElementById('btn-submit-book'); 
+                btn.innerText = "CONFIRMAR E INCLUIR NOVO LIVRO?"; 
+                btn.classList.add('active');
+            } catch(e) { 
+                console.error("Erro IA:", e); 
+                status.innerText = "Atenção: " + e.message; 
+                status.style.color = "#e74c3c"; 
+            }
         }
-
         function buscarCEP(cep) { let cepLimpo = cep.replace(/\D/g, ''); if (cepLimpo.length === 8) { document.getElementById('cep-feedback').innerText = "Buscando..."; document.getElementById('cep-feedback').style.color = "#f39c12"; fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(res => res.json()).then(data => { if (!data.erro) { document.getElementById('u-rua').value = data.logradouro; document.getElementById('u-bairro').value = data.bairro; document.getElementById('u-cidade').value = data.localidade; document.getElementById('u-estado').value = data.uf; document.getElementById('cep-feedback').innerText = "Encontrado!"; document.getElementById('cep-feedback').style.color = "#18BC9C"; } else { document.getElementById('cep-feedback').innerText = "Não localizado."; document.getElementById('cep-feedback').style.color = "#e74c3c"; } }).catch(err => { document.getElementById('cep-feedback').innerText = "Erro."; document.getElementById('cep-feedback').style.color = "#e74c3c"; }); } }
 
      function applyConfig() {
