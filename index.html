@@ -543,7 +543,7 @@
         function processFileToBase64(el, targetId, callback) { const file = el.files[0]; if (file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById(targetId).value = e.target.result; if(callback) callback(); }; reader.readAsDataURL(file); } }
 
         function syncDB() {
-            localStorage.setItem('arco_db_users_v7', JSON.stringify(database.users)); localStorage.setItem('arco_db_books_v7', JSON.stringify(database.books)); localStorage.setItem('arco_db_loans_v7', JSON.stringify(database.loans)); localStorage.setItem('arco_db_fluxo_v7', JSON.stringify(database.fluxo)); localStorage.setItem('arco_db_options_v7', JSON.stringify(database.customOptions)); localStorage.setItem('arco_db_sys_v7', JSON.stringify(database.sysAccess)); updateDashboardCounters();
+            localStorage.setItem('arco_db_users_v7', JSON.stringify(database.users)); localStorage.setItem('arco_db_books_v7', JSON.stringify(database.books)); localStorage.setItem('arco_db_loans_v7', JSON.stringify(database.loans)); localStorage.setItem('arco_db_fluxo_v7', JSON.stringify(database.fluxo)); localStorage.setItem('arco_db_options_v7', JSON.stringify(database.customOptions)); localStorage.setItem('arco_db_sys_v7', JSON.stringify(database.sysAccess)); localStorage.setItem('arco_db_config_v7', JSON.stringify(database.config)); updateDashboardCounters();
         }
 
         // SALVAR NA NUVEM
