@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Arco - Gestão de Biblioteca 7.0</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2C3E50">
+    <script>
+        if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        /* Variáveis de estilo Customizáveis */
+        :root { --primary: #2C3E50; --secondary: #18BC9C; --bg: #F4F6F9; --text: #333333; --header-text: #ffffff; --panel-bg: #ffffff; }
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); margin: 0; padding: 0; min-height: 100vh; transition: background 0.3s, color 0.3s; }
+        
+        /* Loader */
+        #cloud-loader { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.95); z-index:10000; justify-content:center; align-items:center; flex-direction:column; }
+        .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--secondary); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Banner Superior */
+        .top-banner { width: 100%; height: 120px; background-color: var(--primary); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; color: var(--header-text); border-bottom: 4px solid var(--secondary); }
+        .top-banner .logo-area { display: flex; align-items: center; gap: 15px; }
+        .top-banner .logo-area img { max-height: 80px; max-width: 180px; object-fit: contain; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 4px; }
+        .top-banner h1 { margin: 0; font-size: 26px; font-weight: 700; text-shadow: 1px 1px 4px rgba(0,0,0,0.4); }
+
+        /* Login */
+        #login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; }
+        .login-box { background: var(--panel-bg); padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); width: 100%; max-width: 400px; text-align: center; }
+        .login-box h2 { color: var(--primary); margin-bottom: 20px; }
+        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+
+        /* Menu */
+        nav { background: #1a252f; padding: 10px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        nav button { background: transparent; border: none; color: #95a5a6; padding: 10px 15px; cursor: pointer; font-size: 15px; font-weight: 600; border-radius: 4px; transition: 0.2s; }
+        nav button:hover, nav button.active { color: #fff; background: var(--primary); }
+        .btn-scan-nav { background: #f39c12 !important; color: #fff !important; margin-left: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .btn-scan-nav:hover { background: #d68910 !important; }
+
+        /* Layout Base */
+        .container { max-width: 1300px; margin: 20px auto; padding: 0 20px; padding-bottom: 60px; }
+        .panel { display: none; } .panel.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        h2.section-title { border-left: 5px solid var(--secondary); padding-left: 12px; color: var(--primary); margin-bottom: 25px; }
+
+        .dashboard-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .card { background: var(--panel-bg); padding: 20px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); text-align: center; border-top: 4px solid var(--primary); }
+        .card h3 { margin: 0 0 8px 0; font-size: 13px; color: #7f8c8d; text-transform: uppercase; }
+        .card p { margin: 0; font-size: 28px; font-weight: bold; color: var(--primary); }
+
+        .dashboard-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        @media (max-width: 900px) { .dashboard-layout { grid-template-columns: 1fr; } }
+        .box-container { background: var(--panel-bg); padding: 20px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+        .box-container h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
+
+        /* Tabelas */
+        .table-responsive { overflow-x: auto; width: 100%; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; background: var(--panel-bg); }
+        table th { background: rgba(0,0,0,0.05); padding: 12px; color: var(--primary); font-weight: 600; }
+        table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+        .row-thumb { width: 35px; height: 45px; object-fit: cover; border-radius: 3px; background: #eee; }
+        .row-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; background: #eee; }
+
+        /* Componentes Gerais */
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; display: inline-block; }
+        .badge-ativo { background: #e8f8f5; color: #117a65; }
+        .badge-pendente { background: #fef9e7; color: #b7950b; }
+        .badge-atraso { background: #fdedec; color: #922b21; }
+
+        .btn { background: var(--secondary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; justify-content: center; transition: 0.2s; }
+        .btn:hover { filter: brightness(0.9); }
+        .btn-primary { background: var(--primary); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-danger { background: #e74c3c; }
+        .btn-edit { background: #f39c12; }
+
+        /* Integração IA Gemini Area */
+        .ai-area { background: linear-gradient(135deg, rgba(44,62,80,0.05) 0%, rgba(24,188,156,0.1) 100%); border: 2px dashed var(--secondary); padding: 20px; border-radius: 8px; margin-bottom: 25px; text-align: center; }
+        .ai-area h4 { margin-top: 0; color: var(--primary); display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .ai-area p { font-size: 13px; color: #666; margin-bottom: 15px; }
+
+        /* Formulários */
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group.span-2 { grid-column: span 2; }
+        .form-group.span-3 { grid-column: span 3; }
+        .form-group label { margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--primary); }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 14px; background: var(--panel-bg); color: var(--text); }
+        .form-group input:focus, .form-group select:focus { border-color: var(--secondary); outline: none; }
+        .form-group input[type="color"] { height: 42px; padding: 2px; cursor: pointer; }
+        .form-hint { font-size: 11px; color: #7f8c8d; margin-top: 4px; }
+
+        .btn-pulse { transition: all 0.3s ease; }
+        .btn-pulse.active { background: #e67e22; transform: scale(1.03); box-shadow: 0 0 15px rgba(230, 126, 34, 0.5); font-size: 16px; padding: 15px; }
+
+        /* Modais */
+        .preview-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; padding: 20px; }
+        .preview-overlay.active { display: flex; }
+        .preview-box { background: var(--panel-bg); color: var(--text); padding: 25px; border-radius: 8px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .preview-actions { display: flex; gap: 10px; justify-content: center; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px; flex-wrap: wrap; }
+        #reader { width: 100%; max-width: 500px; margin: 0 auto; border: none !important; border-radius: 8px; overflow: hidden; }
+
+        /* Etiqueta / Carteirinha / Comprovante */
+        .etiqueta-livro-wrapper { display: flex; justify-content: center; margin: 15px 0; }
+        .etiqueta-livro { width: 380px; height: 220px; background: #ffffff; border: 2px dashed #7f8c8d; padding: 12px; box-sizing: border-box; display: grid; grid-template-columns: 1fr 110px; gap: 10px; text-align: left; color: #000000; }
+        .etiqueta-info { display: flex; flex-direction: column; justify-content: space-between; height: 100%; font-size: 11px; line-height: 1.3; }
+        .etiqueta-header { font-weight: bold; border-bottom: 1px solid #000; padding-bottom: 3px; margin-bottom: 5px; font-size: 10px; text-transform: uppercase; }
+        .etiqueta-title { font-size: 13px; font-weight: bold; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .etiqueta-id { font-family: monospace; font-size: 12px; font-weight: bold; background: #000; color: #fff; padding: 2px 4px; width: fit-content; margin-top: 3px; }
+        .etiqueta-qrcode-container { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid #ddd; padding-left: 8px; }
+        
+        .carteirinha-wrapper { display: flex; justify-content: center; margin: 15px 0; }
+        .carteirinha { width: 378px; height: 260px; background: #e2e8f0; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); text-align: left; }
+        .carteirinha-moldura { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; pointer-events: none; }
+        .carteirinha-conteudo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; padding: 15px; display: grid; grid-template-columns: 90px 1fr 70px; gap: 10px; align-items: center; }
+        .carteirinha-foto { width: 90px; height: 120px; background: #fff; border: 2px solid #fff; border-radius: 6px; object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .carteirinha-dados { display: flex; flex-direction: column; gap: 5px; }
+        .carteirinha-campo { background: #ffffff; color: #000000; padding: 4px; border-radius: 4px; font-size: 10px; font-weight: 500; border: 1px solid #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .carteirinha-campo strong { color: #333; font-size: 9px; text-transform: uppercase; display: block; margin-bottom: 1px; }
+        .carteirinha-nome { font-size: 11px; font-weight: bold; }
+        .carteirinha-qr-area { background: #fff; padding: 4px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        
+        .comprovante { border: 2px solid var(--primary); padding: 20px; border-radius: 8px; text-align: left; background: #fff; color: #000; font-size: 14px; }
+        .comprovante h3 { text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-top: 0; }
+        .comp-linha { display: flex; justify-content: space-between; border-bottom: 1px dashed #eee; padding: 8px 0; }
+    </style>
+</head>
+<body>
+    <div id="cloud-loader"><div class="spinner"></div><p id="loader-msg">Conectando ao Google Sheets...</p></div>
+
+    <div id="login-screen">
+        <div class="login-box">
+            <h2 style="margin-top:0;">Arco Biblioteca</h2>
+            <p style="color:#666; font-size:14px; margin-bottom:20px;">Acesso ao Sistema</p>
+            <input type="text" id="login-user" placeholder="Usuário">
+            <input type="password" id="login-pass" placeholder="Senha">
+            <button class="btn" style="width:100%; margin-top:10px;" onclick="handleLogin()">Entrar</button>
+        </div>
+    </div>
+
+    <div class="top-banner" id="system-banner">
+        <div class="logo-area">
+            <img id="system-logo-display" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 24 24' fill='white'><path d='M12 2L2 22h20L12 2zm0 3.99L19.53 19H4.47L12 5.99z'/></svg>" alt="Logo">
+            <div>
+                <h1 id="system-title-display">Biblioteca Corporativa Arco</h1>
+                <span id="system-subtitle-display" style="font-size:12px; opacity:0.8;">Sistema Inteligente de Controle</span>
+            </div>
+        </div>
+        <div style="text-align: right; font-size: 14px;">Operador Logado: <span id="user-logged-info" style="color:var(--secondary);"><strong>-</strong></span></div>
+    </div>
+
+    <nav>
+        <button id="nav-dashboard" class="active" onclick="switchTab('dashboard')">Dashboard</button>
+        <button id="nav-usuarios" onclick="switchTab('usuarios')">Gestão de Leitores</button>
+        <button id="nav-livros" onclick="switchTab('livros')">Gestão do Acervo</button>
+        <button id="nav-emprestimos" onclick="switchTab('emprestimos')">Empréstimos e Devoluções</button>
+        <button id="nav-config" onclick="switchTab('config')">Configurações e Acessos</button>
+        <button class="btn-scan-nav" onclick="openScannerModal()">📷 Ler QR Code</button>
+        <button onclick="handleLogout()" style="margin-left: auto; color: #e74c3c;">Sair</button>
+    </nav>
+
+    <div class="container">
+        <div id="panel-dashboard" class="panel active">
+            <h2 class="section-title">Painel de Indicadores</h2>
+            <div class="dashboard-cards">
+                <div class="card"><h3>Leitores Ativos</h3><p id="dash-users">0</p></div>
+                <div class="card" style="border-top-color: #3498db;"><h3>Títulos (Obras)</h3><p id="dash-unique-titles">0</p></div>
+                <div class="card"><h3>Total Físico</h3><p id="dash-total-books">0</p></div>
+                <div class="card" style="border-top-color: #27ae60;"><h3>Disponíveis</h3><p id="dash-avail-books">0</p></div>
+                <div class="card" style="border-top-color: #e67e22;"><h3>Emprestados</h3><p id="dash-borrowed-books">0</p></div>
+                <div class="card" style="border-top-color: #e74c3c;"><h3>Em Atraso</h3><p id="dash-late-books">0</p></div>
+            </div>
+            <div class="dashboard-layout">
+                <div class="box-container" style="grid-column: span 2;">
+                    <h3>Registro de Movimentação Diária (Logs)</h3>
+                    <div class="table-responsive">
+                        <table id="table-fluxo-diario">
+                            <thead><tr><th>Data</th><th>Operação</th><th>Livro</th><th>Leitor</th><th>Operador</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-usuarios" class="panel">
+            <h2 class="section-title">Gerenciamento de Leitores</h2>
+            <div class="box-container">
+                <h3 id="form-user-title">Cadastrar Novo Usuário</h3>
+                <form id="form-user" onsubmit="saveUser(event)">
+                    <input type="hidden" id="editing-user-id" value="">
+                    <div class="form-grid">
+                        <div class="form-group span-2"><label>Nome Completo *</label><input type="text" id="u-nome" required></div>
+                        <div class="form-group"><label>Foto do Perfil</label><input type="file" id="u-foto" accept="image/*" onchange="processFileToBase64(this, 'u-foto-b64')"><input type="hidden" id="u-foto-b64"></div>
+                        <div class="form-group"><label>E-mail *</label><input type="email" id="u-email" required></div>
+                        <div class="form-group"><label>WhatsApp *</label><input type="text" id="u-whatsapp" placeholder="(00) 00000-0000" required></div>
+                        
+                        <div class="form-group">
+                            <label>CEP *</label>
+                            <input type="text" id="u-cep" placeholder="00000-000" maxlength="9" onblur="buscarCEP(this.value)" required>
+                            <span class="form-hint" id="cep-feedback">Digite para buscar</span>
+                        </div>
+                        
+                        <div class="form-group span-2"><label>Endereço (Rua/Avenida) *</label><input type="text" id="u-rua" required></div>
+                        <div class="form-group"><label>Número *</label><input type="text" id="u-numero" required></div>
+                        <div class="form-group"><label>Bairro *</label><input type="text" id="u-bairro" required></div>
+                        <div class="form-group"><label>Cidade *</label><input type="text" id="u-cidade" required></div>
+                        <div class="form-group">
+                            <label>Estado (UF) *</label>
+                            <select id="u-estado" required>
+                                <option value="">Selecione...</option>
+                                <option value="AC">Acre</option><option value="AL">Alagoas</option><option value="AP">Amapá</option><option value="AM">Amazonas</option><option value="BA">Bahia</option><option value="CE">Ceará</option><option value="DF">Distrito Federal</option><option value="ES">Espírito Santo</option><option value="GO">Goiás</option><option value="MA">Maranhão</option><option value="MT">Mato Grosso</option><option value="MS">Mato Grosso do Sul</option><option value="MG">Minas Gerais</option><option value="PA">Pará</option><option value="PB">Paraíba</option><option value="PR">Paraná</option><option value="PE">Pernambuco</option><option value="PI">Piauí</option><option value="RJ">Rio de Janeiro</option><option value="RN">Rio Grande do Norte</option><option value="RS">Rio Grande do Sul</option><option value="RO">Rondônia</option><option value="RR">Roraima</option><option value="SC">Santa Catarina</option><option value="SP">São Paulo</option><option value="SE">Sergipe</option><option value="TO">Tocantins</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group"><label>Identidade de Gênero *</label><select id="u-genero" required><option value="">Selecione...</option></select></div>
+                        <div class="form-group"><label>Orientação Sexual *</label><select id="u-orientacao" required><option value="">Selecione...</option></select></div>
+                        <div class="form-group"><label>Raça / Etnia *</label><select id="u-raca" required><option value="">Selecione...</option></select></div>
+                        <div class="form-group"><label>Escolaridade *</label><select id="u-escolaridade" required><option value="">Selecione...</option></select></div>
+                        <div class="form-group"><label>Inscrito CadÚnico? *</label><select id="u-cadunico" required><option value="Não">Não</option><option value="Sim">Sim</option></select></div>
+                        <div class="form-group"><label>Nível de Acesso *</label><select id="u-nivel" required><option value="Comum">Comum (Leitor)</option><option value="Admin">Admin</option></select></div>
+                        <div class="form-group"><label>Status *</label><select id="u-status" required><option value="Ativo">Ativo</option><option value="Bloqueado">Bloqueado</option></select></div>
+                        <div class="form-group span-2" style="justify-content: flex-end; flex-direction: row; align-items: flex-end;">
+                            <button type="button" class="btn btn-danger" id="btn-cancel-user" style="display:none; margin-right:10px;" onclick="cancelEditUser()">Cancelar Edição</button>
+                            <button type="submit" class="btn" id="btn-submit-user">Cadastrar Usuário</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="box-container">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                    <h3>Base de Leitores</h3>
+                    <input type="text" id="search-user-input" placeholder="Buscar..." onkeyup="renderUsersTable()" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Foto</th><th>ID</th><th>Nome</th><th>Contato</th><th>Status</th><th style="text-align:center;">Ações</th></tr></thead>
+                        <tbody id="table-users-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-livros" class="panel">
+            <h2 class="section-title">Catalogação de Acervo</h2>
+            
+            <div class="ai-area">
+                <h4>✨ FAZER COM I.A</h4>
+                <p>Envie uma foto ou use a câmera para ler a Ficha Catalográfica. O preenchimento é automático.</p>
+                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px; background:#fff; padding:15px; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.05); justify-content:center;">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px; border-right:1px solid #eee; padding-right:15px;">
+                        <span style="font-size:11px; color:#888;">Opção 1: Arquivo Local</span>
+                        <div style="display:flex; align-items:center; gap:5px;">
+                            <input type="file" id="ai-catalog-file" accept="image/*" style="border:1px solid #ccc; border-radius:4px; padding:4px; width:220px; font-size:12px;">
+                            <button type="button" class="btn" onclick="analyzeCatalogCard()" style="background:#8e44ad; padding:6px 12px;">📁 Analisar</button>
+                        </div>
+                    </div>
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding-left:5px;">
+                        <span style="font-size:11px; color:#888;">Opção 2: Câmera Direta</span>
+                        <button type="button" class="btn" onclick="openCameraCapture()" style="background:#2980b9;">📷 Tirar Foto</button>
+                    </div>
+                </div>
+                <div id="ai-status" style="margin-top:10px; font-weight:bold; color:#8e44ad; font-size:13px;"></div>
+            </div>
+
+            <div class="box-container">
+                <h3 id="form-book-title">Inserir Novo Livro</h3>
+                <form id="form-book" onsubmit="saveBook(event)">
+                    <input type="hidden" id="editing-book-id" value="">
+                    <div class="form-grid">
+                        <div class="form-group span-2"><label>Título da Obra *</label><input type="text" id="l-titulo" required></div>
+                        <div class="form-group"><label>Foto da Capa</label><input type="file" id="l-foto" accept="image/*" onchange="processFileToBase64(this, 'l-foto-b64')"><input type="hidden" id="l-foto-b64"></div>
+                        <div class="form-group"><label>Autor *</label><input type="text" id="l-autor" required></div>
+                        <div class="form-group"><label>Editora *</label><input type="text" id="l-editora" required></div>
+                        <div class="form-group"><label>Ano *</label><input type="number" id="l-ano" required></div>
+                        
+                        <div class="form-group">
+                            <label>Categoria / Gênero Literário *</label>
+                            <select id="l-categoria" required><option value="">Selecione uma categoria...</option></select>
+                        </div>
+                        
+                        <div class="form-group"><label>ISBN *</label><input type="text" id="l-isbn" required></div>
+                        <div class="form-group"><label>Quantidade Física Total *</label><input type="number" id="l-quantidade" min="1" value="1" required></div>
+                        <div class="form-group span-3" style="text-align: right; margin-top: 10px;">
+                            <button type="button" class="btn btn-danger" id="btn-cancel-book" style="display:none; margin-right:10px;" onclick="cancelEditBook()">Cancelar</button>
+                            <button type="submit" class="btn btn-pulse" id="btn-submit-book">Catalogar Obra</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="box-container">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+                    <h3>Catálogo</h3>
+                    <input type="text" id="search-book-input" placeholder="Buscar..." onkeyup="renderBooksTable()" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead><tr><th>Capa</th><th>ID Mestre</th><th>Obra</th><th>Autor</th><th>Estoque</th><th style="text-align:center;">Ações</th></tr></thead>
+                        <tbody id="table-books-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-emprestimos" class="panel">
+            <h2 class="section-title">Operações e Movimentações</h2>
+            <div class="dashboard-layout" style="grid-template-columns: 1fr 2fr;">
+                <div class="box-container">
+                    <h3>Novo Empréstimo</h3>
+                    <p style="font-size:12px; color:#7f8c8d;">Data de devolução calculada p/ 7 dias.</p>
+                    <form id="form-loan" onsubmit="createLoan(event)">
+                        <div class="form-group" style="margin-bottom:15px;">
+                            <label>Usuário *</label>
+                            <select id="loan-usuario" required></select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:15px;">
+                            <label>Livro *</label>
+                            <select id="loan-livro" required></select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:15px;">
+                            <label>Data Prevista *</label>
+                            <input type="date" id="loan-data-previsao" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Registrar Empréstimo</button>
+                    </form>
+                </div>
+                <div class="box-container">
+                    <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap:10px;">
+                        <h3 style="margin:0; border:none; padding:0;">Pendências Abertas</h3>
+                        <div>
+                            <label style="font-size:12px; margin-right:5px; font-weight:bold;">Filtrar por Operador:</label>
+                            <select id="filter-operador" onchange="renderLoansSection()" style="padding:5px; border-radius:4px; border:1px solid #ccc;">
+                                <option value="">Todos os Operadores</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead><tr><th>ID Mov.</th><th>Leitor</th><th>Livro</th><th>Retirada</th><th>Devolução</th><th>Operador</th><th>Status</th><th>Ação</th></tr></thead>
+                            <tbody id="table-loans-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-config" class="panel">
+            <h2 class="section-title">Configurações de Design e Identidade</h2>
+            <div class="box-container">
+                <div class="form-grid">
+                    <div class="form-group span-2"><label>Nome do Sistema (Título)</label><input type="text" id="cfg-title" onkeyup="applyConfig()"></div>
+                    <div class="form-group">
+                        <label>Subtítulo (Abaixo do Título)</label>
+                        <div style="display:flex; gap:10px;">
+                            <input type="text" id="cfg-subtitle" onkeyup="applyConfig()" style="flex-grow:1;">
+                            <label style="display:flex; align-items:center; gap:5px; font-weight:normal; font-size:12px;"><input type="checkbox" id="cfg-show-subtitle" onchange="applyConfig()" style="width:auto; height:auto; margin:0;"> Mostrar</label>
+                        </div>
+                    </div>
+                    <div class="form-group"><label>Cor Primária</label><input type="color" id="cfg-c-primary" onchange="applyConfig()"></div>
+                    <div class="form-group"><label>Cor Secundária</label><input type="color" id="cfg-c-secondary" onchange="applyConfig()"></div>
+                    <div class="form-group"><label>Cor de Fundo da Tela</label><input type="color" id="cfg-c-bg" onchange="applyConfig()"></div>
+                    <div class="form-group"><label>Cor de Fundo dos Paineis</label><input type="color" id="cfg-c-panel" onchange="applyConfig()"></div>
+                    <div class="form-group"><label>Cor do Texto Base</label><input type="color" id="cfg-c-text" onchange="applyConfig()"></div>
+                    <div class="form-group"><label>Cor do Texto no Topo</label><input type="color" id="cfg-c-htext" onchange="applyConfig()"></div>
+
+                    <div class="form-group"><label>Logo (180x80px PNG)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-logo', applyConfig)"><input type="hidden" id="cfg-logo"></div>
+                    <div class="form-group span-2"><label>Banner de Topo (1920x120px)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-banner', applyConfig)"><input type="hidden" id="cfg-banner"></div>
+                    <div class="form-group span-3"><label>Moldura da Carteirinha (Obrigatório: 10cm x 6.9cm / PNG Transparente)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-moldura')"><input type="hidden" id="cfg-moldura"></div>
+                    
+                    <div class="form-group span-3" style="border-top:1px solid #ccc; padding-top:15px; margin-top:5px;">
+                        <label>Chave de API (Google Gemini) para leitura automática de livros</label>
+                        <input type="password" id="cfg-gemini-key" placeholder="Cole sua API Key do Google AI Studio aqui">
+                    </div>
+
+                    <div class="form-group span-3" style="text-align:right; border-top:1px solid #ccc; padding-top:15px; margin-top:10px;">
+                        <button class="btn btn-primary" onclick="saveConfig()">Salvar Personalização</button>
+                    </div>
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 40px;">Controle de Operadores (Nuvem)</h2>
+            <div class="dashboard-layout">
+                <div class="box-container">
+                    <h3>Criar/Atualizar Acesso</h3>
+                    <p style="font-size:12px; color:#7f8c8d; margin-bottom:15px;">Para alterar a senha, digite o mesmo usuário com a nova senha.</p>
+                    <div class="form-group" style="margin-bottom:10px;"><label>Usuário</label><input type="text" id="sys-new-user" placeholder="Ex: admin, biblio1..."></div>
+                    <div class="form-group" style="margin-bottom:15px;"><label>Senha</label><input type="password" id="sys-new-pass" placeholder="Defina uma senha segura"></div>
+                    <button class="btn" style="width:100%;" onclick="saveSysUser()">+ Salvar na Nuvem</button>
+                </div>
+                <div class="box-container">
+                    <h3>Operadores Cadastrados</h3>
+                    <div id="sys-users-list" style="background:#f9f9f9; padding:10px; border-radius:4px; max-height:200px; overflow-y:auto; font-size:13px;"></div>
+                </div>
+            </div>
+
+            <h2 class="section-title" style="margin-top: 40px;">Controle Total de Campos (Dropdowns)</h2>
+            <div class="dashboard-layout">
+                <div class="box-container">
+                    <h3>Adicionar Nova Opção</h3>
+                    <div class="form-group" style="margin-bottom:10px;">
+                        <label>Em qual lista deseja adicionar?</label>
+                        <select id="new-opt-field"><option value="categoria">Categoria de Livro</option><option value="genero">Identidade de Gênero</option><option value="orientacao">Orientação Sexual</option><option value="raca">Raça / Etnia</option><option value="escolaridade">Escolaridade</option></select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:15px;"><label>Nome da Nova Opção</label><input type="text" id="new-opt-val" placeholder="Ex: HQ e Quadrinhos..."></div>
+                    <button class="btn" style="width:100%;" onclick="addCustomOption()">+ Incluir Opção</button>
+                </div>
+                <div class="box-container">
+                    <h3>Gerenciar / Excluir Opções</h3>
+                    <div class="form-group" style="margin-bottom:10px;"><label>Ver Lista:</label><select id="view-opt-field" onchange="renderCustomOptionsList()"><option value="categoria">Categoria de Livro</option><option value="genero">Identidade de Gênero</option><option value="orientacao">Orientação Sexual</option><option value="raca">Raça / Etnia</option><option value="escolaridade">Escolaridade</option></select></div>
+                    <div id="custom-opt-list" style="background:#f9f9f9; padding:10px; border-radius:4px; max-height:200px; overflow-y:auto; font-size:13px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-camera-capture" class="preview-overlay">
+        <div class="preview-box">
+            <h3>Câmera - Ficha Catalográfica</h3>
+            <video id="camera-video" style="width:100%; max-width:400px; border-radius:8px; background:#000; margin-bottom:15px;" autoplay playsinline></video>
+            <canvas id="camera-canvas" style="display:none;"></canvas>
+            <div class="preview-actions">
+                <button class="btn btn-primary" onclick="takePhotoAndAnalyze()">📸 Tirar Foto e Analisar</button>
+                <button class="btn btn-danger" onclick="closeCameraCapture()">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-scanner" class="preview-overlay"><div class="preview-box"><h3>Câmera Leitora</h3><div id="reader"></div><div class="preview-actions"><button class="btn btn-danger" onclick="closeScannerModal()">Fechar Câmera</button></div></div></div>
+    
+    <div id="modal-comprovante" class="preview-overlay"><div class="preview-box"><div class="comprovante" id="print-comprovante-target"><h3 id="comp-tipo">Comprovante de Operação</h3><div class="comp-linha"><strong>Leitor:</strong> <span id="comp-user"></span></div><div class="comp-linha"><strong>Documento ID:</strong> <span id="comp-userid"></span></div><div class="comp-linha"><strong>Obra / Livro:</strong> <span id="comp-book"></span></div><div class="comp-linha"><strong>Operador Responsável:</strong> <span id="comp-operador"></span></div><div class="comp-linha"><strong>Data da Transação:</strong> <span id="comp-data-hoje"></span></div><div class="comp-linha"><strong>Devolução Prevista:</strong> <span id="comp-data-prev"></span></div><div class="comp-linha" id="comp-linha-ent" style="display:none; color:var(--secondary);"><strong>Data de Entrega Real:</strong> <span id="comp-data-ent"></span></div><div style="text-align:center; margin-top:20px; font-size:10px; color:#666;">Documento gerado pelo Sistema Arco Biblioteca.<br><span id="comp-system-date"></span></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-comprovante-target', 'Comprovante')">📄 Salvar Recibo</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-comprovante')">Fechar</button></div></div></div>
+    
+    <div id="modal-etiqueta" class="preview-overlay"><div class="preview-box"><h3>Geração de Etiquetas Inteligentes</h3><div style="background:rgba(0,0,0,0.05); padding:10px; border-radius:4px; margin-bottom:15px; display:inline-flex; align-items:center; gap:10px;"><label style="font-weight:bold; font-size:13px;">Exemplar Nº:</label><input type="number" id="print-copy-num" value="1" min="1" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;" onchange="updateEtiquetaQR()"><span id="print-copy-total" style="font-size:13px;"> de X</span></div><div class="etiqueta-livro-wrapper"><div class="etiqueta-livro" id="print-etiqueta-target"><div class="etiqueta-info"><div><div class="etiqueta-header">Marca Arco / Biblioteca</div><div class="etiqueta-title" id="lbl-titulo">Título</div><div style="font-size:10px; color:#333; margin-top:2px;"><strong>Autor:</strong> <span id="lbl-autor"></span><br><strong>Editora:</strong> <span id="lbl-editora"></span> | <span id="lbl-ano"></span><br><strong>ISBN:</strong> <span id="lbl-isbn"></span></div></div><div class="etiqueta-id" id="lbl-id">ID</div></div><div class="etiqueta-qrcode-container"><div id="qrcode-canvas-book" style="width:100px; height:100px;"></div><div id="lbl-exemplar-id" style="font-size:9px; font-weight:bold; margin-top:4px;">Exemplar 1</div></div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-etiqueta-target', 'Etiqueta_Individual')">Baixar ESTA Etiqueta</button><button class="btn btn-sm" style="background:#8e44ad; color:#fff;" onclick="exportAllLabelsPDF()">Baixar TODAS (Lote)</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-etiqueta')">Fechar</button></div></div></div>
+    
+    <div id="modal-carteirinha" class="preview-overlay"><div class="preview-box"><h3>Carteirinha Digital do Leitor</h3><div class="carteirinha-wrapper"><div class="carteirinha" id="print-carteirinha-target"><img id="card-overlay-img" class="carteirinha-moldura" style="display:none;"><div class="carteirinha-conteudo"><img id="card-foto" class="carteirinha-foto" src=""><div class="carteirinha-dados"><div class="carteirinha-campo carteirinha-nome"><strong style="font-size:8px;">Leitor(a)</strong><span id="card-nome"></span></div><div class="carteirinha-campo"><strong>ID do Sistema</strong><span id="card-id" style="font-family:monospace; font-weight:bold;"></span></div><div class="carteirinha-campo"><strong>WhatsApp</strong><span id="card-whatsapp"></span></div><div class="carteirinha-campo"><strong>E-mail</strong><span id="card-email"></span></div></div><div class="carteirinha-qr-area"><div id="qrcode-canvas-user" style="width:60px; height:60px;"></div><span style="font-size:7px; font-weight:bold; margin-top:2px; color:#333;">SCAN-ME</span></div></div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportCarteirinhaPDF()">🪪 Salvar Carteirinha 10x6.9cm</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-carteirinha')">Fechar</button></div></div></div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbyjDxHo4_XWh1_71djbwkDsYO8G6-MOmf6KfLr7ht0uEWKAekCLNKvtqVjiStmmPTvefw/exec";
+        let loggedInOperator = '';
+        const defaultOptions = { categoria: ["Arte e Design", "Filosofia Ancestral", "Ficção Científica", "Literatura Brasileira", "Outro"], genero: ["Mulher Cisgênero", "Homem Cisgênero", "Não-binário"], orientacao: ["Heterossexual", "Homossexual (Gay/Lésbica)", "Bissexual"], raca: ["Branca", "Preta", "Parda", "Indígena"], escolaridade: ["Médio Completo", "Superior Completo"] };
+
+        let database = {
+            users: JSON.parse(localStorage.getItem('arco_db_users_v7')) || [],
+            books: JSON.parse(localStorage.getItem('arco_db_books_v7')) || [],
+            loans: JSON.parse(localStorage.getItem('arco_db_loans_v7')) || [],
+            fluxo: JSON.parse(localStorage.getItem('arco_db_fluxo_v7')) || [],
+            config: JSON.parse(localStorage.getItem('arco_db_config_v7')) || { title: 'Biblioteca Arco', subtitle: 'Controle', showSubtitle: true, primary: '#2C3E50', secondary: '#18BC9C', bg: '#F4F6F9', panel: '#ffffff', text: '#333333', htext: '#ffffff' },
+            customOptions: JSON.parse(localStorage.getItem('arco_db_options_v7')) || defaultOptions,
+            sysAccess: JSON.parse(localStorage.getItem('arco_db_sys_v7')) || [{ user: 'admin', pass: 'admin' }]
+        };
+
+        window.onload = async function() {
+            loadConfigAndApply(); populateDynamicDropdowns(); renderCustomOptionsList(); renderSysUsersList();
+            updateDashboardCounters(); renderUsersTable(); renderBooksTable(); renderLoansSection(); renderFluxoDiarioTable(); setDefaultLoanDate();
+            
+            // INTEGRAÇÃO NUVEM
+            document.getElementById('cloud-loader').style.display = 'flex';
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+                if(data.users && data.users.length > 0) database.users = data.users;
+                if(data.books && data.books.length > 0) database.books = data.books;
+                if(data.loans && data.loans.length > 0) database.loans = data.loans;
+                if(data.sysAccess && data.sysAccess.length > 0) database.sysAccess = data.sysAccess;
+                syncDB();
+                updateDashboardCounters(); renderUsersTable(); renderBooksTable(); renderLoansSection(); renderSysUsersList();
+            } catch(e) {
+                console.warn("Offline/Erro Nuvem: Utilizando dados locais.", e);
+            } finally {
+                document.getElementById('cloud-loader').style.display = 'none';
+            }
+        };
+
+        function generateID(prefix) { const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'; let code = ''; for (let i=0; i<6; i++) code += chars.charAt(Math.floor(Math.random() * chars.length)); return `${prefix}-${code}`; }
+
+        function handleLogin() { 
+            const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
+            const found = database.sysAccess.find(acc => acc.user === u && acc.pass === p);
+            if(found) { loggedInOperator = found.user; document.getElementById('login-screen').style.display = 'none'; document.getElementById('user-logged-info').innerHTML = `<strong>${found.user}</strong>`; document.getElementById('login-pass').value = ''; renderLoansSection(); } else { alert("Usuário ou senha incorretos."); }
+        }
+        function handleLogout() { document.getElementById('login-screen').style.display = 'flex'; loggedInOperator = ''; }
+        function switchTab(t) { document.querySelectorAll('.panel, nav button').forEach(e => e.classList.remove('active')); document.getElementById(`panel-${t}`).classList.add('active'); document.getElementById(`nav-${t}`).classList.add('active'); }
+        function processFileToBase64(el, targetId, callback) { const file = el.files[0]; if (file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById(targetId).value = e.target.result; if(callback) callback(); }; reader.readAsDataURL(file); } }
+
+        function syncDB() {
+            localStorage.setItem('arco_db_users_v7', JSON.stringify(database.users)); localStorage.setItem('arco_db_books_v7', JSON.stringify(database.books)); localStorage.setItem('arco_db_loans_v7', JSON.stringify(database.loans)); localStorage.setItem('arco_db_fluxo_v7', JSON.stringify(database.fluxo)); localStorage.setItem('arco_db_options_v7', JSON.stringify(database.customOptions)); localStorage.setItem('arco_db_sys_v7', JSON.stringify(database.sysAccess)); updateDashboardCounters();
+        }
+
+        // SALVAR NA NUVEM
+        async function cloudSave(actionName, objData) {
+            document.getElementById('cloud-loader').style.display = 'flex';
+            document.getElementById('loader-msg').innerText = "Salvando na Nuvem...";
+            try {
+                const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: actionName, data: objData }) });
+                const out = await res.json();
+                if(out.status === "error") throw new Error(out.message);
+            } catch(e) { console.warn("Modo Offline Ativo. Salvo apenas localmente."); } 
+            finally { document.getElementById('cloud-loader').style.display = 'none'; document.getElementById('loader-msg').innerText = "Conectando ao Google Sheets..."; }
+        }
+
+        function renderSysUsersList() { const listDiv = document.getElementById('sys-users-list'); listDiv.innerHTML = ''; database.sysAccess.forEach((acc, idx) => { listDiv.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 5px; border-bottom:1px solid #ddd;"><span style="font-weight:bold;">${acc.user}</span>${acc.user !== 'admin' ? `<button type="button" class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:10px;" onclick="removeSysUser(${idx})">Excluir</button>` : `<span style="font-size:10px; color:#999;">Master</span>`}</div>`; }); }
+        async function saveSysUser() {
+            const u = document.getElementById('sys-new-user').value.trim(); const p = document.getElementById('sys-new-pass').value.trim(); if(!u || !p) return alert("Preencha usuário e senha.");
+            const existingIdx = database.sysAccess.findIndex(acc => acc.user === u);
+            if(existingIdx !== -1) { database.sysAccess[existingIdx].pass = p; alert("Senha atualizada!"); } else { database.sysAccess.push({ user: u, pass: p }); alert("Novo operador criado!"); }
+            await cloudSave('saveSysAccess', {user: u, pass: p});
+            document.getElementById('sys-new-user').value = ''; document.getElementById('sys-new-pass').value = ''; syncDB(); renderSysUsersList(); renderLoansSection();
+        }
+        async function removeSysUser(idx) { if(confirm("Remover acesso?")) { const utd = database.sysAccess[idx].user; await cloudSave('deleteSysAccess', {user: utd}); database.sysAccess.splice(idx, 1); syncDB(); renderSysUsersList(); } }
+
+        function populateDynamicDropdowns() { const maps = [{ id: 'u-genero', key: 'genero' }, { id: 'u-orientacao', key: 'orientacao' }, { id: 'u-raca', key: 'raca' }, { id: 'u-escolaridade', key: 'escolaridade' }, { id: 'l-categoria', key: 'categoria' }]; maps.forEach(m => { const select = document.getElementById(m.id); if(!select) return; select.innerHTML = '<option value="">Selecione...</option>'; database.customOptions[m.key].forEach(val => { const opt = document.createElement('option'); opt.value = val; opt.innerText = val; select.appendChild(opt); }); }); }
+        function addCustomOption() { const field = document.getElementById('new-opt-field').value; const val = document.getElementById('new-opt-val').value.trim(); if(!val) return alert("Digite o nome da opção!"); if(!database.customOptions[field].includes(val)) { database.customOptions[field].push(val); syncDB(); populateDynamicDropdowns(); document.getElementById('view-opt-field').value = field; renderCustomOptionsList(); document.getElementById('new-opt-val').value = ''; } else { alert('Essa opção já existe!'); } }
+        function removeCustomOption(field, idx) { if(confirm("Atenção: Tem certeza que deseja apagar esta opção do sistema?")) { database.customOptions[field].splice(idx, 1); syncDB(); populateDynamicDropdowns(); renderCustomOptionsList(); } }
+        function renderCustomOptionsList() { const field = document.getElementById('view-opt-field').value; const listDiv = document.getElementById('custom-opt-list'); listDiv.innerHTML = ''; if(database.customOptions[field].length === 0) { listDiv.innerHTML = '<span style="color:#999; font-style:italic;">Lista completamente vazia.</span>'; return; } database.customOptions[field].forEach((val, idx) => { listDiv.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 5px; border-bottom:1px solid #ddd;"><span style="font-weight:bold;">${val}</span><button type="button" class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:10px;" onclick="removeCustomOption('${field}', ${idx})">Excluir</button></div>`; }); }
+
+        // --- CAMERA E AI GEMINI ---
+        let cameraCaptureStream = null;
+        async function openCameraCapture() { document.getElementById('modal-camera-capture').classList.add('active'); try { cameraCaptureStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); document.getElementById('camera-video').srcObject = cameraCaptureStream; } catch (err) { alert("Erro ao acessar a câmera."); closeCameraCapture(); } }
+        function closeCameraCapture() { if (cameraCaptureStream) { cameraCaptureStream.getTracks().forEach(track => track.stop()); cameraCaptureStream = null; } document.getElementById('modal-camera-capture').classList.remove('active'); }
+        function takePhotoAndAnalyze() { const video = document.getElementById('camera-video'); const canvas = document.getElementById('camera-canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height); const base64Str = canvas.toDataURL('image/jpeg'); closeCameraCapture(); processGeminiAnalysis(base64Str.split(',')[1], 'image/jpeg'); }
+
+        async function fileToBase64Promise(file) { return new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res(r.result); r.onerror = e => rej(e); }); }
+        async function analyzeCatalogCard() { const fileInput = document.getElementById('ai-catalog-file'); if(!fileInput.files[0]) return alert("Selecione a foto."); const base64Str = await fileToBase64Promise(fileInput.files[0]); processGeminiAnalysis(base64Str.split(',')[1], fileInput.files[0].type); }
+        
+        async function processGeminiAnalysis(base64Data, mimeType) {
+            const apiKey = database.config.geminiKey; if(!apiKey) { alert("Configure a API Key do Gemini nas Configurações."); switchTab('config'); return; }
+            const status = document.getElementById('ai-status'); status.innerText = "Analisando ficha via Inteligência Artificial... Aguarde..."; status.style.color = "#f39c12";
+            try {
+                const prompt = `Extraia as informações da ficha catalográfica e retorne APENAS um JSON: {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`;
+                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }] }) });
+                const result = await res.json(); if(result.error) throw new Error(result.error.message);
+                let txt = result.candidates[0].content.parts[0].text; txt = txt.replace(/```json/g, '').replace(/```/g, '').trim(); const data = JSON.parse(txt);
+                document.getElementById('l-titulo').value = data.titulo || ''; document.getElementById('l-autor').value = data.autor || ''; document.getElementById('l-editora').value = data.editora || ''; document.getElementById('l-ano').value = data.ano ? data.ano.toString().replace(/\D/g, '') : ''; document.getElementById('l-isbn').value = data.isbn || '';
+                if(data.categoria) { const catSelect = document.getElementById('l-categoria'); if(!Array.from(catSelect.options).some(o => o.value === data.categoria)) { database.customOptions.categoria.push(data.categoria); syncDB(); populateDynamicDropdowns(); } catSelect.value = data.categoria; }
+                status.innerText = "✨ Dados extraídos! Confira abaixo."; status.style.color = "#18BC9C";
+                const btn = document.getElementById('btn-submit-book'); btn.innerText = "CONFIRMAR E INCLUIR NOVO LIVRO?"; btn.classList.add('active');
+            } catch(e) { status.innerText = "Erro ao processar imagem ou API Key inválida."; status.style.color = "#e74c3c"; }
+        }
+
+        function buscarCEP(cep) { let cepLimpo = cep.replace(/\D/g, ''); if (cepLimpo.length === 8) { document.getElementById('cep-feedback').innerText = "Buscando..."; document.getElementById('cep-feedback').style.color = "#f39c12"; fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(res => res.json()).then(data => { if (!data.erro) { document.getElementById('u-rua').value = data.logradouro; document.getElementById('u-bairro').value = data.bairro; document.getElementById('u-cidade').value = data.localidade; document.getElementById('u-estado').value = data.uf; document.getElementById('cep-feedback').innerText = "Encontrado!"; document.getElementById('cep-feedback').style.color = "#18BC9C"; } else { document.getElementById('cep-feedback').innerText = "Não localizado."; document.getElementById('cep-feedback').style.color = "#e74c3c"; } }).catch(err => { document.getElementById('cep-feedback').innerText = "Erro."; document.getElementById('cep-feedback').style.color = "#e74c3c"; }); } }
+
+        function applyConfig() { const r = document.documentElement.style; r.setProperty('--primary', document.getElementById('cfg-c-primary').value); r.setProperty('--secondary', document.getElementById('cfg-c-secondary').value); r.setProperty('--bg', document.getElementById('cfg-c-bg').value); r.setProperty('--panel-bg', document.getElementById('cfg-c-panel').value); r.setProperty('--text', document.getElementById('cfg-c-text').value); r.setProperty('--header-text', document.getElementById('cfg-c-htext').value); document.getElementById('system-title-display').innerText = document.getElementById('cfg-title').value; const sub = document.getElementById('system-subtitle-display'); sub.innerText = document.getElementById('cfg-subtitle').value; sub.style.display = document.getElementById('cfg-show-subtitle').checked ? 'block' : 'none'; const logo = document.getElementById('cfg-logo').value; if(logo) document.getElementById('system-logo-display').src = logo; const banner = document.getElementById('cfg-banner').value; if(banner) document.getElementById('system-banner').style.backgroundImage = `url('${banner}')`; }
+        function loadConfigAndApply() { const c = database.config; document.getElementById('cfg-title').value = c.title || 'Biblioteca Corporativa Arco'; document.getElementById('cfg-subtitle').value = c.subtitle !== undefined ? c.subtitle : 'Sistema Inteligente de Controle'; document.getElementById('cfg-show-subtitle').checked = c.showSubtitle !== undefined ? c.showSubtitle : true; document.getElementById('cfg-gemini-key').value = c.geminiKey || ''; const isValidHex = (h) => /^#[0-9A-F]{6}$/i.test(h); document.getElementById('cfg-c-primary').value = isValidHex(c.primary) ? c.primary : '#2C3E50'; document.getElementById('cfg-c-secondary').value = isValidHex(c.secondary) ? c.secondary : '#18BC9C'; document.getElementById('cfg-c-bg').value = isValidHex(c.bg) ? c.bg : '#F4F6F9'; document.getElementById('cfg-c-panel').value = isValidHex(c.panel) ? c.panel : '#ffffff'; document.getElementById('cfg-c-text').value = isValidHex(c.text) ? c.text : '#333333'; document.getElementById('cfg-c-htext').value = isValidHex(c.htext) ? c.htext : '#ffffff'; document.getElementById('cfg-logo').value = c.logo; document.getElementById('cfg-banner').value = c.banner; document.getElementById('cfg-moldura').value = c.moldura; applyConfig(); }
+        function saveConfig() { database.config = { title: document.getElementById('cfg-title').value, subtitle: document.getElementById('cfg-subtitle').value, showSubtitle: document.getElementById('cfg-show-subtitle').checked, geminiKey: document.getElementById('cfg-gemini-key').value, primary: document.getElementById('cfg-c-primary').value, secondary: document.getElementById('cfg-c-secondary').value, bg: document.getElementById('cfg-c-bg').value, panel: document.getElementById('cfg-c-panel').value, text: document.getElementById('cfg-c-text').value, htext: document.getElementById('cfg-c-htext').value, logo: document.getElementById('cfg-logo').value, banner: document.getElementById('cfg-banner').value, moldura: document.getElementById('cfg-moldura').value }; syncDB(); alert('Configurações Salvas com Sucesso!'); }
+
+        async function saveUser(e) {
+            e.preventDefault(); const editId = document.getElementById('editing-user-id').value;
+            let obj = { Nome_Completo: document.getElementById('u-nome').value, Email: document.getElementById('u-email').value, Telefone_WhatsApp: document.getElementById('u-whatsapp').value, Endereco_CEP: document.getElementById('u-cep').value, Endereco_Rua: document.getElementById('u-rua').value, Endereco_Numero: document.getElementById('u-numero').value, Endereco_Bairro: document.getElementById('u-bairro').value, Endereco_Cidade: document.getElementById('u-cidade').value, Endereco_Estado: document.getElementById('u-estado').value, Identidade_Genero: document.getElementById('u-genero').value, Orientacao_Sexual: document.getElementById('u-orientacao').value, Raca_Etnia: document.getElementById('u-raca').value, Escolaridade: document.getElementById('u-escolaridade').value, Programas_Governo_CADUnico: document.getElementById('u-cadunico').value, Nivel_Acesso: document.getElementById('u-nivel').value, Status: document.getElementById('u-status').value, Foto: document.getElementById('u-foto-b64').value };
+            if (editId) { const idx = database.users.findIndex(u => u.ID_Usuario === editId); obj.ID_Usuario = editId; if(!obj.Foto) obj.Foto = database.users[idx].Foto; database.users[idx] = obj; await cloudSave('saveUser', obj); alert('Atualizado!'); cancelEditUser(); } else { obj.ID_Usuario = generateID('USR'); database.users.push(obj); await cloudSave('saveUser', obj); alert(`Cadastrado! ID: ${obj.ID_Usuario}`); document.getElementById('form-user').reset(); } syncDB(); renderUsersTable(); renderLoansSection();
+        }
+        function editUser(id) { const u = database.users.find(x => x.ID_Usuario === id); if(!u) return; document.getElementById('editing-user-id').value = id; document.getElementById('form-user-title').innerText = "Editar Usuário Existente"; document.getElementById('btn-submit-user').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-user').classList.add('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'inline-block'; document.getElementById('u-nome').value = u.Nome_Completo; document.getElementById('u-email').value = u.Email; document.getElementById('u-whatsapp').value = u.Telefone_WhatsApp; document.getElementById('u-cep').value = u.Endereco_CEP; document.getElementById('u-rua').value = u.Endereco_Rua; document.getElementById('u-numero').value = u.Endereco_Numero; document.getElementById('u-bairro').value = u.Endereco_Bairro; document.getElementById('u-cidade').value = u.Endereco_Cidade; document.getElementById('u-estado').value = u.Endereco_Estado; const setD = (eid, v) => { const el = document.getElementById(eid); if(v && !Array.from(el.options).some(o=>o.value===v)){ const opt=document.createElement('option'); opt.value=v; opt.innerText=v; el.appendChild(opt);} el.value = v; }; setD('u-genero', u.Identidade_Genero); setD('u-orientacao', u.Orientacao_Sexual); setD('u-raca', u.Raca_Etnia); setD('u-escolaridade', u.Escolaridade); document.getElementById('u-cadunico').value = u.Programas_Governo_CADUnico; document.getElementById('u-nivel').value = u.Nivel_Acesso; document.getElementById('u-status').value = u.Status; window.scrollTo(0,0); }
+        function cancelEditUser() { document.getElementById('editing-user-id').value = ''; document.getElementById('form-user-title').innerText = "Cadastrar Novo Usuário"; document.getElementById('btn-submit-user').innerText = "Cadastrar Usuário"; document.getElementById('btn-submit-user').classList.remove('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'none'; document.getElementById('form-user').reset(); }
+        function renderUsersTable() { const t = document.getElementById('table-users-body'); const s = document.getElementById('search-user-input').value.toLowerCase(); t.innerHTML = ''; database.users.filter(u => u.Nome_Completo.toLowerCase().includes(s) || u.ID_Usuario.toLowerCase().includes(s)).forEach(u => { const img = u.Foto ? `<img class="row-avatar" src="${u.Foto}">` : `<div class="row-avatar" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${u.ID_Usuario}</td><td><strong>${u.Nome_Completo}</strong></td><td>${u.Telefone_WhatsApp}</td><td><span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span></td><td style="text-align:center;"><button class="btn btn-sm" onclick="openCarteirinhaModal('${u.ID_Usuario}')">🪪 Cartão</button> <button class="btn btn-sm btn-edit" onclick="editUser('${u.ID_Usuario}')">✏️ Editar</button></td></tr>`; }); }
+
+        async function saveBook(e) {
+            e.preventDefault(); const editId = document.getElementById('editing-book-id').value; const qty = parseInt(document.getElementById('l-quantidade').value);
+            let obj = { Titulo: document.getElementById('l-titulo').value, Autor: document.getElementById('l-autor').value, Editora: document.getElementById('l-editora').value, Ano: document.getElementById('l-ano').value, Categoria: document.getElementById('l-categoria').value, ISBN: document.getElementById('l-isbn').value, Quantidade_Total: qty, Foto_Capa: document.getElementById('l-foto-b64').value };
+            if (editId) { const idx = database.books.findIndex(b => b.ID_Livro === editId); obj.Estoque_Atual = database.books[idx].Estoque_Atual + (qty - database.books[idx].Quantidade_Total); obj.ID_Livro = editId; if(!obj.Foto_Capa) obj.Foto_Capa = database.books[idx].Foto_Capa; database.books[idx] = obj; await cloudSave('saveBook', obj); alert('Atualizado!'); cancelEditBook(); } else { obj.ID_Livro = generateID('LIV'); obj.Estoque_Atual = qty; database.books.push(obj); await cloudSave('saveBook', obj); alert(`Catalogado! ID: ${obj.ID_Livro}`); document.getElementById('form-book').reset(); } document.getElementById('btn-submit-book').innerText = "Catalogar Obra"; document.getElementById('btn-submit-book').classList.remove('active'); document.getElementById('ai-status').innerText=''; document.getElementById('ai-catalog-file').value=''; syncDB(); renderBooksTable(); renderLoansSection();
+        }
+        function editBook(id) { const b = database.books.find(x => x.ID_Livro === id); if(!b) return; document.getElementById('editing-book-id').value = id; document.getElementById('form-book-title').innerText = "Editar Livro Existente"; document.getElementById('btn-submit-book').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-book').classList.add('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'inline-block'; document.getElementById('l-titulo').value = b.Titulo; document.getElementById('l-autor').value = b.Autor; document.getElementById('l-editora').value = b.Editora; document.getElementById('l-ano').value = b.Ano; const cat = document.getElementById('l-categoria'); if(b.Categoria && !Array.from(cat.options).some(o=>o.value===b.Categoria)){ const opt=document.createElement('option'); opt.value=b.Categoria; opt.innerText=b.Categoria; cat.appendChild(opt); } cat.value = b.Categoria; document.getElementById('l-isbn').value = b.ISBN; document.getElementById('l-quantidade').value = b.Quantidade_Total; window.scrollTo(0,0); }
+        function cancelEditBook() { document.getElementById('editing-book-id').value = ''; document.getElementById('form-book-title').innerText = "Inserir Novo Livro"; document.getElementById('btn-submit-book').innerText = "Catalogar Obra"; document.getElementById('btn-submit-book').classList.remove('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'none'; document.getElementById('form-book').reset(); }
+        function renderBooksTable() { const t = document.getElementById('table-books-body'); const s = document.getElementById('search-book-input').value.toLowerCase(); t.innerHTML = ''; database.books.filter(b => b.Titulo.toLowerCase().includes(s) || b.ID_Livro.toLowerCase().includes(s)).forEach(b => { const img = b.Foto_Capa ? `<img class="row-thumb" src="${b.Foto_Capa}">` : `<div class="row-thumb" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${b.ID_Livro}</td><td><strong>${b.Titulo}</strong></td><td>${b.Autor}</td><td><strong>${b.Estoque_Atual}</strong> / ${b.Quantidade_Total}</td><td style="text-align:center;"><button class="btn btn-sm btn-primary" onclick="openEtiquetaModal('${b.ID_Livro}')">🏷️ Etiqueta</button> <button class="btn btn-sm btn-edit" onclick="editBook('${b.ID_Livro}')">✏️ Editar</button></td></tr>`; }); }
+
+        function setDefaultLoanDate() { const d = new Date(); d.setDate(d.getDate() + 7); document.getElementById('loan-data-previsao').value = d.toISOString().split('T')[0]; }
+        function renderLoansSection() { const uSel = document.getElementById('loan-usuario'); const bSel = document.getElementById('loan-livro'); uSel.innerHTML = '<option value="">-- Leitor --</option>'; database.users.filter(u => u.Status === 'Ativo').forEach(u => uSel.innerHTML += `<option value="${u.ID_Usuario}">${u.Nome_Completo} (${u.ID_Usuario})</option>`); bSel.innerHTML = '<option value="">-- Obra --</option>'; database.books.filter(b => b.Estoque_Atual > 0).forEach(b => bSel.innerHTML += `<option value="${b.ID_Livro}">${b.Titulo} (Disp: ${b.Estoque_Atual})</option>`); const opFilter = document.getElementById('filter-operador'); const currentFilter = opFilter.value; opFilter.innerHTML = '<option value="">Todos os Operadores</option>'; database.sysAccess.forEach(acc => { opFilter.innerHTML += `<option value="${acc.user}">${acc.user}</option>`; }); opFilter.value = currentFilter; const t = document.getElementById('table-loans-body'); t.innerHTML = ''; let filteredLoans = database.loans; if(currentFilter) { filteredLoans = filteredLoans.filter(l => l.Operador === currentFilter); } filteredLoans.forEach(l => { const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); const b = database.books.find(x => x.ID_Livro === l.ID_Livro); t.innerHTML += `<tr><td style="font-family:monospace;">${l.ID_Emprestimo}</td><td>${u?u.Nome_Completo:'-'}</td><td>${b?b.Titulo:'-'}</td><td>${l.Data_Retirada}</td><td>${l.Data_Prevista_Devolucao}</td><td style="font-weight:bold; color:#7f8c8d;">${l.Operador || 'admin'}</td><td><span class="badge badge-pendente">${l.Status_Emprestimo}</span></td><td><button class="btn btn-sm btn-danger" onclick="registerReturn('${l.ID_Emprestimo}')">Devolver</button></td></tr>`; }); }
+        
+        async function createLoan(e) {
+            e.preventDefault(); const idU = document.getElementById('loan-usuario').value; const idB = document.getElementById('loan-livro').value; const dataPrev = document.getElementById('loan-data-previsao').value;
+            const b = database.books.find(x => x.ID_Livro === idB); const u = database.users.find(x => x.ID_Usuario === idU); if(b.Estoque_Atual <= 0) return alert('Esgotado!'); b.Estoque_Atual--;
+            const today = new Date().toLocaleDateString('pt-BR'); const dpObj = new Date(dataPrev); dpObj.setDate(dpObj.getDate() + 1); const dp = dpObj.toLocaleDateString('pt-BR');
+            const lId = generateID('EMP'); const op = loggedInOperator || 'admin';
+            let loanObj = { ID_Emprestimo: lId, ID_Usuario: idU, ID_Livro: idB, Data_Retirada: today, Data_Prevista_Devolucao: dp, Status_Emprestimo: 'Ativo', Operador: op };
+            database.loans.push(loanObj); database.fluxo.unshift({ data: today, operacao: 'SAÍDA (Empréstimo)', livro: b.Titulo, usuario: u.Nome_Completo, responsavel: op });
+            await cloudSave('saveLoan', loanObj); await cloudSave('saveBook', b);
+            syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); document.getElementById('form-loan').reset(); setDefaultLoanDate(); showComprovante('EMPRÉSTIMO DE LIVRO', u.Nome_Completo, u.ID_Usuario, b.Titulo, today, dp, null, op);
+        }
+        async function registerReturn(id) {
+            const lIdx = database.loans.findIndex(x => x.ID_Emprestimo === id); if(lIdx === -1) return; const l = database.loans[lIdx]; const b = database.books.find(x => x.ID_Livro === l.ID_Livro); const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); if(b) b.Estoque_Atual++;
+            const today = new Date().toLocaleDateString('pt-BR'); const op = loggedInOperator || 'admin';
+            l.Status_Emprestimo = 'Devolvido'; l.Data_Entrega_Real = today;
+            database.fluxo.unshift({ data: today, operacao: 'ENTRADA (Devolução)', livro: b?b.Titulo:'-', usuario: u?u.Nome_Completo:'-', responsavel: op }); 
+            await cloudSave('saveLoan', l); if(b) await cloudSave('saveBook', b);
+            database.loans.splice(lIdx, 1);
+            syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); showComprovante('DEVOLUÇÃO DE LIVRO', u?u.Nome_Completo:'-', u?u.ID_Usuario:'-', b?b.Titulo:'-', l.Data_Retirada, l.Data_Prevista_Devolucao, today, op);
+        }
+        function showComprovante(tipo, userName, userId, bookName, dtRet, dtPrev, dtEnt, operador) { document.getElementById('comp-tipo').innerText = tipo; document.getElementById('comp-user').innerText = userName; document.getElementById('comp-userid').innerText = userId; document.getElementById('comp-book').innerText = bookName; document.getElementById('comp-operador').innerText = operador; document.getElementById('comp-data-hoje').innerText = dtRet; document.getElementById('comp-data-prev').innerText = dtPrev; document.getElementById('comp-system-date').innerText = new Date().toLocaleString('pt-BR'); const le = document.getElementById('comp-linha-ent'); if(dtEnt) { document.getElementById('comp-data-ent').innerText = dtEnt; le.style.display = 'flex'; } else { le.style.display = 'none'; } document.getElementById('modal-comprovante').classList.add('active'); }
+        function renderFluxoDiarioTable() { const t = document.getElementById('table-fluxo-diario').getElementsByTagName('tbody')[0]; t.innerHTML = ''; database.fluxo.forEach(f => t.innerHTML += `<tr><td>${f.data}</td><td><span class="badge ${f.operacao.includes('SAÍDA')?'badge-atraso':'badge-ativo'}">${f.operacao}</span></td><td><strong>${f.livro}</strong></td><td>${f.usuario}</td><td><span style="color:#7f8c8d; font-weight:bold;">${f.responsavel}</span></td></tr>`); }
+        function updateDashboardCounters() { document.getElementById('dash-users').innerText = database.users.length; document.getElementById('dash-unique-titles').innerText = database.books.length; let tot = 0; let av = 0; database.books.forEach(b => { tot += b.Quantidade_Total; av += b.Estoque_Atual; }); document.getElementById('dash-total-books').innerText = tot; document.getElementById('dash-avail-books').innerText = av; document.getElementById('dash-borrowed-books').innerText = tot - av; }
+
+        let currentBook = null;
+        function openEtiquetaModal(id) { currentBook = database.books.find(x => x.ID_Livro === id); if(!currentBook) return; document.getElementById('lbl-titulo').innerText = currentBook.Titulo; document.getElementById('lbl-autor').innerText = currentBook.Autor; document.getElementById('lbl-editora').innerText = currentBook.Editora; document.getElementById('lbl-ano').innerText = currentBook.Ano; document.getElementById('lbl-isbn').innerText = currentBook.ISBN; document.getElementById('lbl-id').innerText = currentBook.ID_Livro; const cin = document.getElementById('print-copy-num'); cin.max = currentBook.Quantidade_Total; cin.value = 1; document.getElementById('print-copy-total').innerText = ` de ${currentBook.Quantidade_Total}`; updateEtiquetaQR(); document.getElementById('modal-etiqueta').classList.add('active'); }
+        function updateEtiquetaQR() { if(!currentBook) return; const n = document.getElementById('print-copy-num').value; document.getElementById('lbl-exemplar-id').innerText = `Exemplar ${n}`; const qrTarget = document.getElementById('qrcode-canvas-book'); qrTarget.innerHTML = ''; new QRCode(qrTarget, { text: `${currentBook.ID_Livro}/${n}`, width: 100, height: 100, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); }
+        function openCarteirinhaModal(id) { const u = database.users.find(x => x.ID_Usuario === id); if(!u) return; document.getElementById('card-nome').innerText = u.Nome_Completo; document.getElementById('card-id').innerText = u.ID_Usuario; document.getElementById('card-whatsapp').innerText = u.Telefone_WhatsApp; document.getElementById('card-email').innerText = u.Email; document.getElementById('card-foto').src = u.Foto ? u.Foto : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='grey'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-3.3c-8-3.3z'/></svg>"; const overlay = document.getElementById('card-overlay-img'); if(database.config.moldura) { overlay.src = database.config.moldura; overlay.style.display = 'block'; } else { overlay.style.display = 'none'; } const qrTarget = document.getElementById('qrcode-canvas-user'); qrTarget.innerHTML = ''; new QRCode(qrTarget, { text: u.ID_Usuario, width: 60, height: 60, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); document.getElementById('modal-carteirinha').classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+        let scanner; function openScannerModal() { document.getElementById('modal-scanner').classList.add('active'); scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); scanner.render((t, r) => { closeScannerModal(); switchTab('emprestimos'); if (t.startsWith('USR-')) { document.getElementById('loan-usuario').value = t; alert("Leitor Selecionado!"); } else if (t.startsWith('LIV-')) { document.getElementById('loan-livro').value = t.split('/')[0]; alert("Obra Selecionada!"); } }, () => {}); } function closeScannerModal() { document.getElementById('modal-scanner').classList.remove('active'); if(scanner) scanner.clear(); }
+        function exportElementToPDF(eid, name) { html2canvas(document.getElementById(eid), { scale: 2 }).then(canvas => { const pdf = new window.jspdf.jsPDF('l', 'mm', 'a4'); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 15, 140, 85); pdf.save(`${name}_${Date.now()}.pdf`); }); }
+        function exportCarteirinhaPDF() { html2canvas(document.getElementById('print-carteirinha-target'), { scale: 3 }).then(canvas => { const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'cm', format: [10, 6.9] }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 10, 6.9); pdf.save(`Carteirinha_${document.getElementById('card-id').innerText}.pdf`); }); }
+        async function exportAllLabelsPDF() { if(!currentBook) return; const total = currentBook.Quantidade_Total; const pdf = new window.jspdf.jsPDF('l', 'mm', 'a4'); const target = document.getElementById('print-etiqueta-target'); const currCopy = document.getElementById('print-copy-num').value; for(let i=1; i<=total; i++) { document.getElementById('print-copy-num').value = i; updateEtiquetaQR(); await new Promise(r => setTimeout(r, 150)); const canvas = await html2canvas(target, { scale: 2 }); if(i > 1) pdf.addPage(); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 15, 110, 65); } pdf.save(`Etiquetas_${currentBook.ID_Livro}.pdf`); document.getElementById('print-copy-num').value = currCopy; updateEtiquetaQR(); }
+    </script>
+</body>
+</html>
