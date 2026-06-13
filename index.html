@@ -346,15 +346,17 @@
                 </div>
                 <div class="box-container">
                     <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap:10px;">
-                        <h3 style="margin:0; border:none; padding:0;">Pendências Abertas</h3>
-                        <div>
-                            <label style="font-size:12px; margin-right:5px; font-weight:bold;">Filtrar por Operador:</label>
-                            <select id="filter-operador" onchange="renderLoansSection()" style="padding:5px; border-radius:4px; border:1px solid #ccc;">
-                                <option value="">Todos os Operadores</option>
-                            </select>
+                        <h3 style="margin:0; border:none; padding:0;">Histórico e Pendências</h3>
+                        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                            <input type="text" id="search-loan-input" placeholder="Buscar leitor, livro, cód..." onkeyup="renderLoansSection()" style="padding:6px; border:1px solid #ccc; border-radius:4px; min-width:220px;">
+                            <div>
+                                <label style="font-size:12px; margin-right:5px; font-weight:bold;">Operador:</label>
+                                <select id="filter-operador" onchange="renderLoansSection()" style="padding:6px; border-radius:4px; border:1px solid #ccc;">
+                                    <option value="">Todos</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
-                    <div class="table-responsive">
+                    </div>                    <div class="table-responsive">
                         <table>
                             <thead><tr><th>ID Mov.</th><th>Leitor</th><th>Livro</th><th>Retirada</th><th>Devolução</th><th>Operador</th><th>Status</th><th>Ação</th></tr></thead>
                             <tbody id="table-loans-body"></tbody>
@@ -593,21 +595,34 @@
             
             try {
                 const prompt = `Você é um bibliotecário especialista. Extraia os dados da ficha catalográfica e retorne EXATAMENTE um JSON puro, sem marcações ou crases (NÃO use \`\`\`json), sem explicações extras, APENAS o objeto: {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`;
+                
+                const bodyPayload = {
+                    contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }],
+                    safetySettings: [
+                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                    ]
+                };
+
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, { 
                     method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify({ contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }] }) 
+                    body: JSON.stringify(bodyPayload) 
                 });
                 
                 const result = await res.json(); 
                 
-                if(result.error) throw new Error("Erro do Google: " + result.error.message);
-                if(!result.candidates) throw new Error("A IA processou, mas não retornou dados para esta imagem.");
+                if(result.error) throw new Error(result.error.message);
+                if(!result.candidates || result.candidates.length === 0) {
+                    throw new Error("Bloqueio da Google ou Imagem Ilegível. Detalhes: " + JSON.stringify(result));
+                }
                 
                 let txt = result.candidates[0].content.parts[0].text; 
                 txt = txt.replace(/```json/g, '').replace(/```/g, '').trim(); 
                 
                 let data;
-                try { data = JSON.parse(txt); } catch(err) { throw new Error("A IA leu a foto, mas o texto gerado fugiu do padrão esperado."); }
+                try { data = JSON.parse(txt); } catch(err) { throw new Error("A IA leu a foto, mas gerou um formato inválido:\n" + txt); }
                 
                 document.getElementById('l-titulo').value = data.titulo || ''; 
                 document.getElementById('l-autor').value = data.autor || ''; 
@@ -631,7 +646,7 @@
                 btn.classList.add('active');
             } catch(e) { 
                 console.error("Erro IA:", e); 
-                status.innerText = "Atenção: " + e.message; 
+                status.innerText = "Erro Detalhado: " + e.message; 
                 status.style.color = "#e74c3c"; 
             }
         }
@@ -737,8 +752,30 @@
         function renderBooksTable() { const t = document.getElementById('table-books-body'); const s = document.getElementById('search-book-input').value.toLowerCase(); t.innerHTML = ''; database.books.filter(b => b.Titulo.toLowerCase().includes(s) || b.ID_Livro.toLowerCase().includes(s)).forEach(b => { const img = b.Foto_Capa ? `<img class="row-thumb" src="${b.Foto_Capa}">` : `<div class="row-thumb" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${b.ID_Livro}</td><td><strong>${b.Titulo}</strong></td><td>${b.Autor}</td><td><strong>${b.Estoque_Atual}</strong> / ${b.Quantidade_Total}</td><td style="text-align:center;"><button class="btn btn-sm btn-primary" onclick="openEtiquetaModal('${b.ID_Livro}')">🏷️ Etiqueta</button> <button class="btn btn-sm btn-edit" onclick="editBook('${b.ID_Livro}')">✏️ Editar</button></td></tr>`; }); }
 
         function setDefaultLoanDate() { const d = new Date(); d.setDate(d.getDate() + 7); document.getElementById('loan-data-previsao').value = d.toISOString().split('T')[0]; }
-        function renderLoansSection() { const uSel = document.getElementById('loan-usuario'); const bSel = document.getElementById('loan-livro'); uSel.innerHTML = '<option value="">-- Leitor --</option>'; database.users.filter(u => u.Status === 'Ativo').forEach(u => uSel.innerHTML += `<option value="${u.ID_Usuario}">${u.Nome_Completo} (${u.ID_Usuario})</option>`); bSel.innerHTML = '<option value="">-- Obra --</option>'; database.books.filter(b => b.Estoque_Atual > 0).forEach(b => bSel.innerHTML += `<option value="${b.ID_Livro}">${b.Titulo} (Disp: ${b.Estoque_Atual})</option>`); const opFilter = document.getElementById('filter-operador'); const currentFilter = opFilter.value; opFilter.innerHTML = '<option value="">Todos os Operadores</option>'; database.sysAccess.forEach(acc => { opFilter.innerHTML += `<option value="${acc.user}">${acc.user}</option>`; }); opFilter.value = currentFilter; const t = document.getElementById('table-loans-body'); t.innerHTML = ''; let filteredLoans = database.loans; if(currentFilter) { filteredLoans = filteredLoans.filter(l => l.Operador === currentFilter); } filteredLoans.forEach(l => { const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); const b = database.books.find(x => x.ID_Livro === l.ID_Livro); t.innerHTML += `<tr><td style="font-family:monospace;">${l.ID_Emprestimo}</td><td>${u?u.Nome_Completo:'-'}</td><td>${b?b.Titulo:'-'}</td><td>${l.Data_Retirada}</td><td>${l.Data_Prevista_Devolucao}</td><td style="font-weight:bold; color:#7f8c8d;">${l.Operador || 'admin'}</td><td><span class="badge badge-pendente">${l.Status_Emprestimo}</span></td><td><button class="btn btn-sm btn-danger" onclick="registerReturn('${l.ID_Emprestimo}')">Devolver</button></td></tr>`; }); }
-        
+        function renderLoansSection() { 
+            const uSel = document.getElementById('loan-usuario'); const bSel = document.getElementById('loan-livro'); 
+            uSel.innerHTML = '<option value="">-- Selecione o Leitor --</option>'; database.users.filter(u => u.Status === 'Ativo').forEach(u => uSel.innerHTML += `<option value="${u.ID_Usuario}">${u.Nome_Completo} (${u.ID_Usuario})</option>`); 
+            bSel.innerHTML = '<option value="">-- Selecione a Obra --</option>'; database.books.filter(b => b.Estoque_Atual > 0).forEach(b => bSel.innerHTML += `<option value="${b.ID_Livro}">${b.Titulo} (Disp: ${b.Estoque_Atual})</option>`); 
+            const opFilter = document.getElementById('filter-operador'); const currentFilter = opFilter.value; opFilter.innerHTML = '<option value="">Todos</option>'; database.sysAccess.forEach(acc => { opFilter.innerHTML += `<option value="${acc.user}">${acc.user}</option>`; }); opFilter.value = currentFilter; 
+            const t = document.getElementById('table-loans-body'); t.innerHTML = ''; 
+            
+            const searchStr = document.getElementById('search-loan-input') ? document.getElementById('search-loan-input').value.toLowerCase().trim() : '';
+            
+            let filteredLoans = database.loans.filter(l => {
+                const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); const b = database.books.find(x => x.ID_Livro === l.ID_Livro);
+                const term = searchStr.replace('usr-', '').replace('liv-', '').replace('emp-', ''); // Ignora prefixos automaticamente
+                const matchSearch = !term || (u && u.Nome_Completo.toLowerCase().includes(term)) || (b && b.Titulo.toLowerCase().includes(term)) || l.ID_Emprestimo.toLowerCase().includes(term) || l.ID_Usuario.toLowerCase().includes(term) || l.ID_Livro.toLowerCase().includes(term);
+                const matchOp = !currentFilter || l.Operador === currentFilter;
+                return matchSearch && matchOp;
+            });
+            
+            filteredLoans.reverse().forEach(l => { 
+                const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); const b = database.books.find(x => x.ID_Livro === l.ID_Livro); 
+                const isDev = l.Status_Emprestimo === 'Devolvido';
+                const btnHtml = isDev ? `<span style="color:#18BC9C; font-weight:bold; font-size:12px;">✔️ Entregue</span>` : `<button class="btn btn-sm btn-danger" onclick="registerReturn('${l.ID_Emprestimo}')">Devolver</button>`;
+                t.innerHTML += `<tr><td style="font-family:monospace;">${l.ID_Emprestimo}</td><td>${u?u.Nome_Completo:'-'}</td><td>${b?b.Titulo:'-'}</td><td>${l.Data_Retirada}</td><td>${l.Data_Prevista_Devolucao}</td><td style="font-weight:bold; color:#7f8c8d;">${l.Operador || 'admin'}</td><td><span class="badge ${isDev?'badge-ativo':'badge-pendente'}">${l.Status_Emprestimo}</span></td><td>${btnHtml}</td></tr>`; 
+            }); 
+        }        
         async function createLoan(e) {
             e.preventDefault(); const idU = document.getElementById('loan-usuario').value; const idB = document.getElementById('loan-livro').value; const dataPrev = document.getElementById('loan-data-previsao').value;
             const b = database.books.find(x => x.ID_Livro === idB); const u = database.users.find(x => x.ID_Usuario === idU); if(b.Estoque_Atual <= 0) return alert('Esgotado!'); b.Estoque_Atual--;
@@ -759,7 +796,21 @@
             syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); showComprovante('DEVOLUÇÃO DE LIVRO', u?u.Nome_Completo:'-', u?u.ID_Usuario:'-', b?b.Titulo:'-', l.Data_Retirada, l.Data_Prevista_Devolucao, today, op);
         }
         function showComprovante(tipo, userName, userId, bookName, dtRet, dtPrev, dtEnt, operador) { document.getElementById('comp-tipo').innerText = tipo; document.getElementById('comp-user').innerText = userName; document.getElementById('comp-userid').innerText = userId; document.getElementById('comp-book').innerText = bookName; document.getElementById('comp-operador').innerText = operador; document.getElementById('comp-data-hoje').innerText = dtRet; document.getElementById('comp-data-prev').innerText = dtPrev; document.getElementById('comp-system-date').innerText = new Date().toLocaleString('pt-BR'); const le = document.getElementById('comp-linha-ent'); if(dtEnt) { document.getElementById('comp-data-ent').innerText = dtEnt; le.style.display = 'flex'; } else { le.style.display = 'none'; } document.getElementById('modal-comprovante').classList.add('active'); }
-        function renderFluxoDiarioTable() { const t = document.getElementById('table-fluxo-diario').getElementsByTagName('tbody')[0]; t.innerHTML = ''; database.fluxo.forEach(f => t.innerHTML += `<tr><td>${f.data}</td><td><span class="badge ${f.operacao.includes('SAÍDA')?'badge-atraso':'badge-ativo'}">${f.operacao}</span></td><td><strong>${f.livro}</strong></td><td>${f.usuario}</td><td><span style="color:#7f8c8d; font-weight:bold;">${f.responsavel}</span></td></tr>`); }
+        function renderFluxoDiarioTable() { 
+            const t = document.getElementById('table-fluxo-diario').getElementsByTagName('tbody')[0]; t.innerHTML = ''; 
+            let logs = [];
+            database.loans.forEach(l => {
+                const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); const b = database.books.find(x => x.ID_Livro === l.ID_Livro);
+                const safeDate = str => { const pts = str.split('/'); return pts.length === 3 ? `${pts[2]}-${pts[1]}-${pts[0]}` : str; };
+                logs.push({ dIso: safeDate(l.Data_Retirada), dataStr: l.Data_Retirada, op: 'SAÍDA (Empréstimo)', liv: b?b.Titulo:'-', usr: u?u.Nome_Completo:'-', resp: l.Operador||'admin' });
+                if(l.Status_Emprestimo === 'Devolvido' && l.Data_Entrega_Real) {
+                    logs.push({ dIso: safeDate(l.Data_Entrega_Real), dataStr: l.Data_Entrega_Real, op: 'ENTRADA (Devolução)', liv: b?b.Titulo:'-', usr: u?u.Nome_Completo:'-', resp: l.Operador||'admin' });
+                }
+            });
+            logs.sort((a,b) => b.dIso.localeCompare(a.dIso)).slice(0, 50).forEach(f => {
+                t.innerHTML += `<tr><td>${f.dataStr}</td><td><span class="badge ${f.op.includes('SAÍDA')?'badge-atraso':'badge-ativo'}">${f.op}</span></td><td><strong>${f.liv}</strong></td><td>${f.usr}</td><td><span style="color:#7f8c8d; font-weight:bold;">${f.resp}</span></td></tr>`; 
+            }); 
+        }
         function updateDashboardCounters() { document.getElementById('dash-users').innerText = database.users.length; document.getElementById('dash-unique-titles').innerText = database.books.length; let tot = 0; let av = 0; database.books.forEach(b => { tot += b.Quantidade_Total; av += b.Estoque_Atual; }); document.getElementById('dash-total-books').innerText = tot; document.getElementById('dash-avail-books').innerText = av; document.getElementById('dash-borrowed-books').innerText = tot - av; }
 
         let currentBook = null;
