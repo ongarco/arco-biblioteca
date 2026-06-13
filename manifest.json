@@ -1,0 +1,16 @@
+{
+  "name": "Arco Biblioteca",
+  "short_name": "Arco Biblio",
+  "description": "Sistema Inteligente de Gestão de Biblioteca",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#F4F6F9",
+  "theme_color": "#2C3E50",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3389/3389081.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
