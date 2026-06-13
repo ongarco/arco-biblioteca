@@ -31,9 +31,18 @@
         .top-banner .logo-area img { max-height: 80px; max-width: 180px; object-fit: contain; background: rgba(255,255,255,0.1); padding: 5px; border-radius: 4px; }
         .top-banner h1 { margin: 0; font-size: 26px; font-weight: 700; text-shadow: 1px 1px 4px rgba(0,0,0,0.4); }
 
-        /* Login */
-        #login-screen { display: flex; justify-content: center; align-items: center; height: 100vh; background: var(--primary); position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; }
-        .login-box { background: var(--panel-bg); padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); width: 100%; max-width: 400px; text-align: center; }
+       /* Login */
+        #login-screen { 
+            display: flex; justify-content: center; align-items: center; height: 100vh; 
+            background-color: var(--primary);
+            background-image: var(--bg-login-desk);
+            background-size: cover; background-position: center; background-repeat: no-repeat;
+            position: fixed; top: 0; left: 0; width: 100%; z-index: 9999; 
+        }
+        @media (max-width: 768px) {
+            #login-screen { background-image: var(--bg-login-mob, var(--bg-login-desk)); }
+        }
+        .login-box { background: var(--panel-bg); padding: 40px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.4); width: 100%; max-width: 400px; text-align: center; margin: 20px; }
         .login-box h2 { color: var(--primary); margin-bottom: 20px; }
         .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
 
@@ -374,8 +383,10 @@
                     <div class="form-group"><label>Cor do Texto Base</label><input type="color" id="cfg-c-text" onchange="applyConfig()"></div>
                     <div class="form-group"><label>Cor do Texto no Topo</label><input type="color" id="cfg-c-htext" onchange="applyConfig()"></div>
 
-                    <div class="form-group"><label>Logo (180x80px PNG)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-logo', applyConfig)"><input type="hidden" id="cfg-logo"></div>
+<div class="form-group"><label>Logo (180x80px PNG)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-logo', applyConfig)"><input type="hidden" id="cfg-logo"></div>
                     <div class="form-group span-2"><label>Banner de Topo (1920x120px)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-banner', applyConfig)"><input type="hidden" id="cfg-banner"></div>
+                    <div class="form-group span-2"><label>Fundo do Login - Desktop (ex: 1920x1080)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-bg-login-desk', applyConfig)"><input type="hidden" id="cfg-bg-login-desk"></div>
+                    <div class="form-group"><label>Fundo do Login - Mobile (ex: 1080x1920)</label><input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-bg-login-mob', applyConfig)"><input type="hidden" id="cfg-bg-login-mob"></div>
                    <div class="form-group">
                         <label>Logo Arco Carteirinha (1080x1080)</label>
                         <input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-logo-arco')">
@@ -588,13 +599,27 @@
 
         function buscarCEP(cep) { let cepLimpo = cep.replace(/\D/g, ''); if (cepLimpo.length === 8) { document.getElementById('cep-feedback').innerText = "Buscando..."; document.getElementById('cep-feedback').style.color = "#f39c12"; fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(res => res.json()).then(data => { if (!data.erro) { document.getElementById('u-rua').value = data.logradouro; document.getElementById('u-bairro').value = data.bairro; document.getElementById('u-cidade').value = data.localidade; document.getElementById('u-estado').value = data.uf; document.getElementById('cep-feedback').innerText = "Encontrado!"; document.getElementById('cep-feedback').style.color = "#18BC9C"; } else { document.getElementById('cep-feedback').innerText = "Não localizado."; document.getElementById('cep-feedback').style.color = "#e74c3c"; } }).catch(err => { document.getElementById('cep-feedback').innerText = "Erro."; document.getElementById('cep-feedback').style.color = "#e74c3c"; }); } }
 
-        function applyConfig() { const r = document.documentElement.style; r.setProperty('--primary', document.getElementById('cfg-c-primary').value); r.setProperty('--secondary', document.getElementById('cfg-c-secondary').value); r.setProperty('--bg', document.getElementById('cfg-c-bg').value); r.setProperty('--panel-bg', document.getElementById('cfg-c-panel').value); r.setProperty('--text', document.getElementById('cfg-c-text').value); r.setProperty('--header-text', document.getElementById('cfg-c-htext').value); document.getElementById('system-title-display').innerText = document.getElementById('cfg-title').value; const sub = document.getElementById('system-subtitle-display'); sub.innerText = document.getElementById('cfg-subtitle').value; sub.style.display = document.getElementById('cfg-show-subtitle').checked ? 'block' : 'none'; const logo = document.getElementById('cfg-logo').value; if(logo) document.getElementById('system-logo-display').src = logo; const banner = document.getElementById('cfg-banner').value; if(banner) document.getElementById('system-banner').style.backgroundImage = `url('${banner}')`; }
+       function applyConfig() {
+            const r = document.documentElement.style; r.setProperty('--primary', document.getElementById('cfg-c-primary').value); r.setProperty('--secondary', document.getElementById('cfg-c-secondary').value); r.setProperty('--bg', document.getElementById('cfg-c-bg').value); r.setProperty('--panel-bg', document.getElementById('cfg-c-panel').value); r.setProperty('--text', document.getElementById('cfg-c-text').value); r.setProperty('--header-text', document.getElementById('cfg-c-htext').value);
+            document.getElementById('system-title-display').innerText = document.getElementById('cfg-title').value;
+            const sub = document.getElementById('system-subtitle-display'); sub.innerText = document.getElementById('cfg-subtitle').value; sub.style.display = document.getElementById('cfg-show-subtitle').checked ? 'block' : 'none';
+            const logo = document.getElementById('cfg-logo').value; if(logo) document.getElementById('system-logo-display').src = logo;
+            const banner = document.getElementById('cfg-banner').value; if(banner) document.getElementById('system-banner').style.backgroundImage = `url('${banner}')`;
+            
+            const bgDesk = document.getElementById('cfg-bg-login-desk').value; if(bgDesk) r.setProperty('--bg-login-desk', `url('${bgDesk}')`); else r.removeProperty('--bg-login-desk');
+            const bgMob = document.getElementById('cfg-bg-login-mob').value; if(bgMob) r.setProperty('--bg-login-mob', `url('${bgMob}')`); else r.removeProperty('--bg-login-mob');
+        }
         function loadConfigAndApply() {
             const c = database.config; document.getElementById('cfg-title').value = c.title || 'Biblioteca Corporativa Arco'; document.getElementById('cfg-subtitle').value = c.subtitle !== undefined ? c.subtitle : 'Sistema Inteligente de Controle'; document.getElementById('cfg-show-subtitle').checked = c.showSubtitle !== undefined ? c.showSubtitle : true; document.getElementById('cfg-gemini-key').value = c.geminiKey || '';
             const isValidHex = (h) => /^#[0-9A-F]{6}$/i.test(h); document.getElementById('cfg-c-primary').value = isValidHex(c.primary) ? c.primary : '#2C3E50'; document.getElementById('cfg-c-secondary').value = isValidHex(c.secondary) ? c.secondary : '#18BC9C'; document.getElementById('cfg-c-bg').value = isValidHex(c.bg) ? c.bg : '#F4F6F9'; document.getElementById('cfg-c-panel').value = isValidHex(c.panel) ? c.panel : '#ffffff'; document.getElementById('cfg-c-text').value = isValidHex(c.text) ? c.text : '#333333'; document.getElementById('cfg-c-htext').value = isValidHex(c.htext) ? c.htext : '#ffffff';
-            document.getElementById('cfg-logo').value = c.logo; document.getElementById('cfg-banner').value = c.banner; document.getElementById('cfg-moldura').value = c.moldura; document.getElementById('cfg-logo-arco').value = c.logoArco || ''; document.getElementById('cfg-logo-biblio').value = c.logoBiblio || ''; document.getElementById('cfg-show-qr').value = c.showQRCarteirinha !== false ? "true" : "false"; applyConfig();
+            
+            document.getElementById('cfg-logo').value = c.logo || ''; document.getElementById('cfg-banner').value = c.banner || ''; document.getElementById('cfg-moldura').value = c.moldura || ''; document.getElementById('cfg-logo-arco').value = c.logoArco || ''; document.getElementById('cfg-logo-biblio').value = c.logoBiblio || ''; document.getElementById('cfg-show-qr').value = c.showQRCarteirinha !== false ? "true" : "false"; 
+            document.getElementById('cfg-bg-login-desk').value = c.bgLoginDesk || ''; document.getElementById('cfg-bg-login-mob').value = c.bgLoginMob || ''; applyConfig();
         }
-        function saveConfig() { database.config = { title: document.getElementById('cfg-title').value, subtitle: document.getElementById('cfg-subtitle').value, showSubtitle: document.getElementById('cfg-show-subtitle').checked, geminiKey: document.getElementById('cfg-gemini-key').value, primary: document.getElementById('cfg-c-primary').value, secondary: document.getElementById('cfg-c-secondary').value, bg: document.getElementById('cfg-c-bg').value, panel: document.getElementById('cfg-c-panel').value, text: document.getElementById('cfg-c-text').value, htext: document.getElementById('cfg-c-htext').value, logo: document.getElementById('cfg-logo').value, banner: document.getElementById('cfg-banner').value, moldura: document.getElementById('cfg-moldura').value, logoArco: document.getElementById('cfg-logo-arco').value, logoBiblio: document.getElementById('cfg-logo-biblio').value, showQRCarteirinha: document.getElementById('cfg-show-qr').value === "true" }; syncDB(); alert('Configurações Salvas com Sucesso!'); }
+        function saveConfig() { 
+            database.config = { title: document.getElementById('cfg-title').value, subtitle: document.getElementById('cfg-subtitle').value, showSubtitle: document.getElementById('cfg-show-subtitle').checked, geminiKey: document.getElementById('cfg-gemini-key').value, primary: document.getElementById('cfg-c-primary').value, secondary: document.getElementById('cfg-c-secondary').value, bg: document.getElementById('cfg-c-bg').value, panel: document.getElementById('cfg-c-panel').value, text: document.getElementById('cfg-c-text').value, htext: document.getElementById('cfg-c-htext').value, logo: document.getElementById('cfg-logo').value, banner: document.getElementById('cfg-banner').value, moldura: document.getElementById('cfg-moldura').value, logoArco: document.getElementById('cfg-logo-arco').value, logoBiblio: document.getElementById('cfg-logo-biblio').value, showQRCarteirinha: document.getElementById('cfg-show-qr').value === "true", bgLoginDesk: document.getElementById('cfg-bg-login-desk').value, bgLoginMob: document.getElementById('cfg-bg-login-mob').value }; 
+            syncDB(); alert('Configurações Salvas com Sucesso!'); 
+        }
 
         async function saveUser(e) {
             e.preventDefault(); const editId = document.getElementById('editing-user-id').value;
