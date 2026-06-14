@@ -541,7 +541,11 @@
 
     <div id="modal-scanner" class="preview-overlay"><div class="preview-box"><h3>Câmera Leitora</h3><div id="reader"></div><div class="preview-actions"><button class="btn btn-danger" onclick="closeScannerModal()">Fechar Câmera</button></div></div></div>
     
-    <div id="modal-comprovante" class="preview-overlay"><div class="preview-box"><div class="comprovante" id="print-comprovante-target"><h3 id="comp-tipo">Comprovante de Operação</h3><div class="comp-linha"><strong>Leitor:</strong> <span id="comp-user"></span></div><div class="comp-linha"><strong>Documento ID:</strong> <span id="comp-userid"></span></div><div class="comp-linha"><strong>Obra / Livro:</strong> <span id="comp-book"></span></div><div class="comp-linha"><strong>Operador Responsável:</strong> <span id="comp-operador"></span></div><div class="comp-linha"><strong>Data da Transação:</strong> <span id="comp-data-hoje"></span></div><div class="comp-linha"><strong>Devolução Prevista:</strong> <span id="comp-data-prev"></span></div><div class="comp-linha" id="comp-linha-ent" style="display:none; color:var(--secondary);"><strong>Data de Entrega Real:</strong> <span id="comp-data-ent"></span></div><div style="text-align:center; margin-top:20px; font-size:10px; color:#666;">Documento gerado pelo Sistema Arco Biblioteca.<br><span id="comp-system-date"></span></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-comprovante-target', 'Comprovante')">📄 Salvar Recibo</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-comprovante')">Fechar</button></div></div></div>
+    <div id="modal-comprovante" class="preview-overlay"><div class="preview-box"><div class="comprovante" id="print-comprovante-target"><h3 id="comp-tipo">Comprovante de Operação</h3><div class="comp-linha"><strong>Leitor:</strong> <span id="comp-user"></span></div><div class="comp-linha"><strong>Documento ID:</strong> <span id="comp-userid"></span></div><div class="comp-linha"><strong>Obra / Livro:</strong> <span id="comp-book"></span></div><div class="comp-linha"><strong>Operador Responsável:</strong> <span id="comp-operador"></span></div><div class="comp-linha"><strong>Data da Transação:</strong> <span id="comp-data-hoje"></span></div><div class="comp-linha"><strong>Devolução Prevista:</strong> <span id="comp-data-prev"></span></div><div class="comp-linha" id="comp-linha-ent" style="display:none; color:var(--secondary);"><strong>Data de Entrega Real:</strong> <span id="comp-data-ent"></span></div>
+<div style="background:#fef9e7; border:1px solid #f1c40f; padding:10px; border-radius:6px; margin-top:15px; font-size:11px; text-align:justify; color:#555;">
+    <strong>Aviso Importante:</strong> Atrasos na devolução impedem que outras pessoas acessem o livro. Para incentivar o compromisso com nossa comunidade, nosso sistema bloqueia a retirada de novas obras em caso de empréstimos vencidos. Em caso de atraso, conta-se uma multa de R$ 0,50 por dia, cujo não pagamento também gera bloqueio de novas retiradas.
+</div>
+<div style="text-align:center; margin-top:20px; font-size:10px; color:#666;">Documento gerado pelo Sistema Arco Biblioteca.<br><span id="comp-system-date"></span></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-comprovante-target', 'Comprovante')">📄 Salvar Recibo</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-comprovante')">Fechar</button></div></div></div>
     
     <div id="modal-etiqueta" class="preview-overlay"><div class="preview-box"><h3>Geração de Etiquetas Inteligentes</h3><div style="background:rgba(0,0,0,0.05); padding:10px; border-radius:4px; margin-bottom:15px; display:inline-flex; align-items:center; gap:10px;"><label style="font-weight:bold; font-size:13px;">Exemplar Nº:</label><input type="number" id="print-copy-num" value="1" min="1" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;" onchange="updateEtiquetaBarcode()"><span id="print-copy-total" style="font-size:13px;"> de X</span></div><div class="etiqueta-livro-wrapper"><div class="etiqueta-livro" id="print-etiqueta-target"><div class="etiqueta-info"><div><div class="etiqueta-header">Marca Arco / Biblioteca</div><div class="etiqueta-title" id="lbl-titulo">Título</div><div style="font-size:10px; color:#333; margin-top:2px;"><strong>Autor:</strong> <span id="lbl-autor"></span><br><strong>Editora:</strong> <span id="lbl-editora"></span> | <span id="lbl-ano"></span><br><strong>ISBN:</strong> <span id="lbl-isbn"></span></div></div><div class="etiqueta-id" id="lbl-id">ID</div></div><div class="etiqueta-qrcode-container"><canvas id="barcode-canvas-book" style="width:100%; max-height:40px;"></canvas><div id="lbl-exemplar-id" style="font-size:9px; font-weight:bold; margin-top:4px;">Exemplar 1</div></div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-etiqueta-target', 'Etiqueta_Individual')">Baixar ESTA Etiqueta</button><button class="btn btn-sm" style="background:#8e44ad; color:#fff;" onclick="exportAllLabelsPDF()">Baixar TODAS (Lote)</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-etiqueta')">Fechar</button></div></div></div>
     
@@ -600,6 +604,7 @@
                     <p style="margin: 0; font-size: 13px; color: #555;"><strong>Contato:</strong> <span id="perfil-contato"></span></p>
                     <p style="margin: 0; font-size: 13px; color: #555;"><strong>Endereço:</strong> <span id="perfil-endereco"></span></p>
                     <p style="margin: 0; font-size: 13px; color: #555;"><strong>Status:</strong> <span id="perfil-status"></span></p>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>Membro desde:</strong> <span id="perfil-data-cad"></span></p>
                 </div>
             </div>
             <h4 style="text-align: left; margin-bottom: 10px; color: var(--primary);">Histórico de Empréstimos</h4>
@@ -887,7 +892,18 @@ function applyConfig() {
         async function saveUser(e) {
             e.preventDefault(); const editId = document.getElementById('editing-user-id').value;
             let obj = { Nome_Completo: document.getElementById('u-nome').value, Email: document.getElementById('u-email').value, Telefone_WhatsApp: document.getElementById('u-whatsapp').value, Endereco_CEP: document.getElementById('u-cep').value, Endereco_Rua: document.getElementById('u-rua').value, Endereco_Numero: document.getElementById('u-numero').value, Endereco_Bairro: document.getElementById('u-bairro').value, Endereco_Cidade: document.getElementById('u-cidade').value, Endereco_Estado: document.getElementById('u-estado').value, Identidade_Genero: document.getElementById('u-genero').value, Orientacao_Sexual: document.getElementById('u-orientacao').value, Raca_Etnia: document.getElementById('u-raca').value, Escolaridade: document.getElementById('u-escolaridade').value, Programas_Governo_CADUnico: document.getElementById('u-cadunico').value, Nivel_Acesso: document.getElementById('u-nivel').value, Status: document.getElementById('u-status').value, Foto: document.getElementById('u-foto-b64').value };
-            if (editId) { const idx = database.users.findIndex(u => u.ID_Usuario === editId); obj.ID_Usuario = editId; if(!obj.Foto) obj.Foto = database.users[idx].Foto; database.users[idx] = obj; await cloudSave('saveUser', obj); alert('Atualizado!'); cancelEditUser(); } else { obj.ID_Usuario = generateID('USR'); database.users.push(obj); await cloudSave('saveUser', obj); alert(`Cadastrado! ID: ${obj.ID_Usuario}`); document.getElementById('form-user').reset(); } syncDB(); renderUsersTable(); renderLoansSection();
+            if (editId) { 
+                const idx = database.users.findIndex(u => u.ID_Usuario === editId); 
+                obj.ID_Usuario = editId; 
+                obj.Data_Cadastro = database.users[idx].Data_Cadastro || new Date().toLocaleDateString('pt-BR'); 
+                if(!obj.Foto) obj.Foto = database.users[idx].Foto; 
+                database.users[idx] = obj; await cloudSave('saveUser', obj); alert('Atualizado!'); cancelEditUser(); 
+            } else { 
+                obj.ID_Usuario = generateID('USR'); 
+                obj.Data_Cadastro = new Date().toLocaleDateString('pt-BR'); 
+                database.users.push(obj); await cloudSave('saveUser', obj); alert(`Cadastrado! ID: ${obj.ID_Usuario}`); document.getElementById('form-user').reset(); 
+            } 
+            syncDB(); renderUsersTable(); renderLoansSection();
         }
         function editUser(id) { const u = database.users.find(x => x.ID_Usuario === id); if(!u) return; document.getElementById('editing-user-id').value = id; document.getElementById('form-user-title').innerText = "Editar Usuário Existente"; document.getElementById('btn-submit-user').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-user').classList.add('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'inline-block'; document.getElementById('u-nome').value = u.Nome_Completo; document.getElementById('u-email').value = u.Email; document.getElementById('u-whatsapp').value = u.Telefone_WhatsApp; document.getElementById('u-cep').value = u.Endereco_CEP; document.getElementById('u-rua').value = u.Endereco_Rua; document.getElementById('u-numero').value = u.Endereco_Numero; document.getElementById('u-bairro').value = u.Endereco_Bairro; document.getElementById('u-cidade').value = u.Endereco_Cidade; document.getElementById('u-estado').value = u.Endereco_Estado; const setD = (eid, v) => { const el = document.getElementById(eid); if(v && !Array.from(el.options).some(o=>o.value===v)){ const opt=document.createElement('option'); opt.value=v; opt.innerText=v; el.appendChild(opt);} el.value = v; }; setD('u-genero', u.Identidade_Genero); setD('u-orientacao', u.Orientacao_Sexual); setD('u-raca', u.Raca_Etnia); setD('u-escolaridade', u.Escolaridade); document.getElementById('u-cadunico').value = u.Programas_Governo_CADUnico; document.getElementById('u-nivel').value = u.Nivel_Acesso; document.getElementById('u-status').value = u.Status; window.scrollTo(0,0); }
         function cancelEditUser() { document.getElementById('editing-user-id').value = ''; document.getElementById('form-user-title').innerText = "Cadastrar Novo Usuário"; document.getElementById('btn-submit-user').innerText = "Cadastrar Usuário"; document.getElementById('btn-submit-user').classList.remove('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'none'; document.getElementById('form-user').reset(); }
@@ -903,6 +919,7 @@ function applyConfig() {
             document.getElementById('perfil-contato').innerText = `${u.Telefone_WhatsApp} / ${u.Email}`;
             document.getElementById('perfil-endereco').innerText = `${u.Endereco_Rua}, ${u.Endereco_Numero} - ${u.Endereco_Bairro}, ${u.Endereco_Cidade}/${u.Endereco_Estado}`;
             document.getElementById('perfil-status').innerHTML = `<span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span>`;
+            document.getElementById('perfil-data-cad').innerText = u.Data_Cadastro || 'Importado / Sem data';
             
             const t = document.getElementById('perfil-historico-body'); t.innerHTML = '';
             const userLoans = database.loans.filter(l => l.ID_Usuario === id).reverse();
@@ -1029,7 +1046,22 @@ function applyConfig() {
             const u = database.users.find(x => x.ID_Usuario === idU); 
             
             if(!b || !u) return alert("Por favor, selecione um Leitor e uma Obra válidos da lista suspensa.");
-            if(b.Estoque_Atual <= 0) return alert('Esgotado!'); b.Estoque_Atual--;
+            
+            // TRAVA 1: Limite Máximo de 2 Livros
+            const userActiveLoans = database.loans.filter(l => l.ID_Usuario === idU && l.Status_Emprestimo === 'Ativo');
+            if(userActiveLoans.length >= 2) return alert("BLOQUEADO: Este leitor já atingiu o limite máximo de 2 empréstimos simultâneos.");
+
+            // TRAVA 2: Checagem de Inadimplência (Atrasos)
+            const dataAtual = new Date(); dataAtual.setHours(0,0,0,0);
+            const hasLateBooks = userActiveLoans.some(l => {
+                if(!l.Data_Prevista_Devolucao) return false;
+                const pts = l.Data_Prevista_Devolucao.split('/');
+                const prev = new Date(pts[2], pts[1]-1, pts[0]);
+                return prev < dataAtual;
+            });
+            if(hasLateBooks) return alert("BLOQUEADO: Este leitor possui livros em atraso! A retirada de novas obras fica suspensa até a devolução e regularização da multa.");
+
+            if(b.Estoque_Atual <= 0) return alert('Obra esgotada no momento!'); b.Estoque_Atual--;
             
             const today = new Date().toLocaleDateString('pt-BR'); 
             const dpObj = new Date(dataPrev); dpObj.setDate(dpObj.getDate() + 1); 
@@ -1040,7 +1072,9 @@ function applyConfig() {
             database.loans.push(loanObj); database.fluxo.unshift({ data: today, operacao: 'SAÍDA (Empréstimo)', livro: b.Titulo, usuario: u.Nome_Completo, responsavel: op });
             await cloudSave('saveLoan', loanObj); await cloudSave('saveBook', b);
             
-            if(u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Empréstimo - ${database.config.title || 'Biblioteca'}`, message: `Olá ${u.Nome_Completo},\n\nEste é o comprovante do seu empréstimo.\n\n📚 Obra: ${b.Titulo}\n📅 Retirada: ${today}\n⏳ Devolução Prevista: ${dp}\n\nLembre-se de devolver no prazo para evitar multas/bloqueios.\nBoa leitura!` }); }
+            const txtPolitica = "\n\n⚠️ NOTA IMPORTANTE: Atrasos na devolução impedem que outras pessoas acessem o livro. Para incentivar a devolução no prazo, nosso sistema bloqueia a retirada de novas obras se houver um empréstimo vencido. Além disso, em caso de atraso, conta-se uma multa de R$ 0,50 por dia. O não pagamento impede a retirada de novos livros. Contamos com você para manter nosso ecossistema saudável!";
+
+            if(u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Empréstimo - ${database.config.title || 'Biblioteca Arco'}`, message: `Olá ${u.Nome_Completo},\n\nEste é o comprovante do seu empréstimo.\n\n📚 Obra: ${b.Titulo}\n📅 Retirada: ${today}\n⏳ Devolução Prevista: ${dp}${txtPolitica}\n\nBoa leitura!` }); }
             
             syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); 
             document.getElementById('form-loan').reset(); setDefaultLoanDate(); 
@@ -1060,7 +1094,9 @@ function applyConfig() {
             database.fluxo.unshift({ data: today, operacao: 'ENTRADA (Devolução)', livro: b?b.Titulo:'-', usuario: u?u.Nome_Completo:'-', responsavel: op }); 
             await cloudSave('saveLoan', l); if(b) await cloudSave('saveBook', b);
             
-            if(u && u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Devolução - ${database.config.title || 'Biblioteca'}`, message: `Olá ${u.Nome_Completo},\n\nConfirmamos a devolução do livro.\n\n📚 Obra: ${b?b.Titulo:'-'}\n📅 Data da Devolução: ${today}\n\nObrigado por cuidar do nosso acervo!` }); }
+            const txtPolitica = "\n\nLembramos que o atraso gera multas de R$ 0,50 por dia e bloqueio de novas retiradas. Mantenha seu cadastro sempre em dia para continuar aproveitando a biblioteca!";
+
+            if(u && u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Devolução - ${database.config.title || 'Biblioteca Arco'}`, message: `Olá ${u.Nome_Completo},\n\nConfirmamos a devolução da obra.\n\n📚 Livro: ${b?b.Titulo:'-'}\n📅 Data da Devolução: ${today}${txtPolitica}\n\nObrigado por cuidar do nosso acervo!` }); }
             
             syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); showComprovante('DEVOLUÇÃO DE LIVRO', u?u.Nome_Completo:'-', u?u.ID_Usuario:'-', b?b.Titulo:'-', l.Data_Retirada, l.Data_Prevista_Devolucao, today, op);
         }
