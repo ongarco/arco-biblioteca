@@ -1237,7 +1237,7 @@ function applyConfig() {
 
             try {
                 // 1. Gera o PDF idêntico ao de salvar (Alta Qualidade A4)
-                const canvas = await html2canvas(document.getElementById('print-carteirinha-target'), { scale: 5, useCORS: true, logging: false });
+                const canvas = await html2canvas(document.getElementById('print-carteirinha-target'), { scale: 2, useCORS: true, logging: false });
                 const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'cm', format: 'a4' }); 
                 
                 pdf.setFont("helvetica", "bold"); pdf.setFontSize(14); pdf.text("Biblioteca Comunitária João Silvério Trevisan", 2, 2.5);
