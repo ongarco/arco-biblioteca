@@ -130,14 +130,14 @@
         .carteirinha { width: 359px; height: 260px; background: transparent; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); text-align: left; }
         .carteirinha-moldura { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; pointer-events: none; }
         .carteirinha-conteudo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
-        .c-item { position: absolute; font-family: 'Segoe UI', Tahoma, sans-serif; color: #000; font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
-        .c-foto { position: absolute; width: 85px; height: 105px; background-color: #eee; background-size: cover; background-position: center; border-radius: 4px; left: var(--p-foto-x, 20px); top: var(--p-foto-y, 80px); z-index: 3;}
-        .c-nome { left: var(--p-nome-x, 130px); top: var(--p-nome-y, 80px); font-size: 15px; }
-        .c-id { left: var(--p-id-x, 130px); top: var(--p-id-y, 110px); font-family: monospace; }
-        .c-tel { left: var(--p-tel-x, 130px); top: var(--p-tel-y, 140px); }
-        .c-mail { left: var(--p-mail-x, 130px); top: var(--p-mail-y, 170px); font-size: 11px; }
+        .c-item { position: absolute; font-family: 'Segoe UI', Tahoma, sans-serif; color: #000; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+        .c-foto { position: absolute; width: var(--s-foto-w, 85px); height: var(--s-foto-h, 105px); background-color: #eee; background-size: cover; background-position: center; border-radius: 4px; left: var(--p-foto-x, 20px); top: var(--p-foto-y, 80px); z-index: 3;}
+        .c-nome { left: var(--p-nome-x, 130px); top: var(--p-nome-y, 80px); font-size: var(--s-nome, 15px); }
+        .c-id { left: var(--p-id-x, 130px); top: var(--p-id-y, 110px); font-family: monospace; font-size: var(--s-id, 13px); }
+        .c-tel { left: var(--p-tel-x, 130px); top: var(--p-tel-y, 140px); font-size: var(--s-tel, 13px); }
+        .c-mail { left: var(--p-mail-x, 130px); top: var(--p-mail-y, 170px); font-size: var(--s-mail, 11px); }
         .c-barcode-container { position: absolute; left: var(--p-bar-x, 130px); top: var(--p-bar-y, 200px); background: #fff; padding: 2px 4px; border-radius: 4px; display: inline-block; }
-        .c-barcode-container canvas { display: block; max-height: 35px; }
+        .c-barcode-container canvas { display: block; }
         
         .comprovante { border: 2px solid var(--primary); padding: 20px; border-radius: 8px; text-align: left; background: #fff; color: #000; font-size: 14px; }
         .comprovante h3 { text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-top: 0; }
@@ -437,14 +437,47 @@
                                 </div>
                             </div>
                             
-                            <!-- Controles de Posição (Atualizados para tempo real) -->
-                            <div style="flex: 1; min-width: 300px; display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:15px; background:rgba(0,0,0,0.02); padding:15px; border-radius:8px;">
-                                <div><label style="font-size:11px;">📷 Foto (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-foto-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-foto-y" placeholder="Y" oninput="applyConfig()"></div></div>
-                                <div><label style="font-size:11px;">👤 Nome (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-nome-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-nome-y" placeholder="Y" oninput="applyConfig()"></div></div>
-                                <div><label style="font-size:11px;">🆔 ID (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-id-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-id-y" placeholder="Y" oninput="applyConfig()"></div></div>
-                                <div><label style="font-size:11px;">📱 Telefone (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-tel-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-tel-y" placeholder="Y" oninput="applyConfig()"></div></div>
-                                <div><label style="font-size:11px;">✉️ E-mail (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-mail-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-mail-y" placeholder="Y" oninput="applyConfig()"></div></div>
-                                <div><label style="font-size:11px;">📶 Cód. Barras (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-bar-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-bar-y" placeholder="Y" oninput="applyConfig()"></div></div>
+                            <!-- Controles de Posição e Tamanho -->
+                            <div style="flex: 1; min-width: 380px; background:rgba(0,0,0,0.02); padding:15px; border-radius:8px;">
+                                <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; font-weight:bold; font-size:12px; color:var(--primary); border-bottom:1px solid #ddd; padding-bottom:8px; margin-bottom:10px;">
+                                    <div>Elemento</div><div style="text-align:center;">Posição (X, Y)</div><div style="text-align:center;">Tamanho</div>
+                                </div>
+                                
+                                <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; align-items:center; margin-bottom:10px;">
+                                    <span style="font-size:12px;">📷 Foto</span>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-p-foto-x" placeholder="X" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-p-foto-y" placeholder="Y" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-s-foto-w" placeholder="Larg." oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-s-foto-h" placeholder="Alt." oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                </div>
+                                
+                                <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; align-items:center; margin-bottom:10px;">
+                                    <span style="font-size:12px;">👤 Nome</span>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-p-nome-x" placeholder="X" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-p-nome-y" placeholder="Y" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <input type="number" id="cfg-s-nome" placeholder="Tamanho Letra" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                                </div>
+
+                                <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; align-items:center; margin-bottom:10px;">
+                                    <span style="font-size:12px;">🆔 ID</span>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-p-id-x" placeholder="X" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-p-id-y" placeholder="Y" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <input type="number" id="cfg-s-id" placeholder="Tamanho Letra" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                                </div>
+
+                                <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; align-items:center; margin-bottom:10px;">
+                                    <span style="font-size:12px;">📱 Telefone</span>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-p-tel-x" placeholder="X" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-p-tel-y" placeholder="Y" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <input type="number" id="cfg-s-tel" placeholder="Tamanho Letra" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                                </div>
+
+                                <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; align-items:center; margin-bottom:10px;">
+                                    <span style="font-size:12px;">✉️ E-mail</span>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-p-mail-x" placeholder="X" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-p-mail-y" placeholder="Y" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <input type="number" id="cfg-s-mail" placeholder="Tamanho Letra" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                                </div>
+
+                                <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; align-items:center;">
+                                    <span style="font-size:12px;">📶 Cód. Barras</span>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-p-bar-x" placeholder="X" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-p-bar-y" placeholder="Y" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-s-bar-w" placeholder="Espess." oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-s-bar-h" placeholder="Alt." oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -723,8 +756,9 @@ function applyConfig() {
             r.setProperty('--text', getVal('cfg-c-text') || '#333333'); 
             r.setProperty('--header-text', getVal('cfg-c-htext') || '#ffffff');
             
-            // Correção vital: se o input estiver vazio, assume posições padrões em vez de 0px
             const px = (val, def) => (val !== undefined && val !== '') ? val + 'px' : def;
+            
+            // Posições
             r.setProperty('--p-foto-x', px(getVal('cfg-p-foto-x'), '20px')); r.setProperty('--p-foto-y', px(getVal('cfg-p-foto-y'), '80px'));
             r.setProperty('--p-nome-x', px(getVal('cfg-p-nome-x'), '130px')); r.setProperty('--p-nome-y', px(getVal('cfg-p-nome-y'), '80px'));
             r.setProperty('--p-id-x', px(getVal('cfg-p-id-x'), '130px')); r.setProperty('--p-id-y', px(getVal('cfg-p-id-y'), '110px'));
@@ -732,6 +766,17 @@ function applyConfig() {
             r.setProperty('--p-mail-x', px(getVal('cfg-p-mail-x'), '130px')); r.setProperty('--p-mail-y', px(getVal('cfg-p-mail-y'), '170px'));
             r.setProperty('--p-bar-x', px(getVal('cfg-p-bar-x'), '130px')); r.setProperty('--p-bar-y', px(getVal('cfg-p-bar-y'), '200px'));
             
+            // Tamanhos
+            r.setProperty('--s-foto-w', px(getVal('cfg-s-foto-w'), '85px')); r.setProperty('--s-foto-h', px(getVal('cfg-s-foto-h'), '105px'));
+            r.setProperty('--s-nome', px(getVal('cfg-s-nome'), '15px'));
+            r.setProperty('--s-id', px(getVal('cfg-s-id'), '13px'));
+            r.setProperty('--s-tel', px(getVal('cfg-s-tel'), '13px'));
+            r.setProperty('--s-mail', px(getVal('cfg-s-mail'), '11px'));
+            
+            // Controle dinâmico do Código de Barras (Mais estreito e menor por padrão: 1 / 25)
+            const barW = getVal('cfg-s-bar-w') ? parseInt(getVal('cfg-s-bar-w')) : 1; 
+            const barH = getVal('cfg-s-bar-h') ? parseInt(getVal('cfg-s-bar-h')) : 25; 
+
             const titleEl = document.getElementById('system-title-display');
             if(titleEl) titleEl.innerText = getVal('cfg-title');
             
@@ -764,7 +809,7 @@ function applyConfig() {
             
             const previewCanvas = document.getElementById('preview-barcode-canvas');
             if(previewCanvas && typeof JsBarcode !== 'undefined') {
-                try { JsBarcode(previewCanvas, "USR-1A2B3C", { format: "CODE128", width: 2, height: 35, displayValue: false, margin: 0, lineColor: "#000000" }); } catch(e) {}
+                try { JsBarcode(previewCanvas, "USR-1A2B3C", { format: "CODE128", width: barW, height: barH, displayValue: false, margin: 0, lineColor: "#000000" }); } catch(e) {}
             }
         }
 
@@ -798,6 +843,13 @@ function applyConfig() {
             setVal('cfg-p-tel-x', c.pTelX || ''); setVal('cfg-p-tel-y', c.pTelY || '');
             setVal('cfg-p-mail-x', c.pMailX || ''); setVal('cfg-p-mail-y', c.pMailY || '');
             setVal('cfg-p-bar-x', c.pBarX || ''); setVal('cfg-p-bar-y', c.pBarY || '');
+
+            setVal('cfg-s-foto-w', c.sFotoW || ''); setVal('cfg-s-foto-h', c.sFotoH || '');
+            setVal('cfg-s-nome', c.sNome || '');
+            setVal('cfg-s-id', c.sId || '');
+            setVal('cfg-s-tel', c.sTel || '');
+            setVal('cfg-s-mail', c.sMail || '');
+            setVal('cfg-s-bar-w', c.sBarW || ''); setVal('cfg-s-bar-h', c.sBarH || '');
             
             applyConfig();
         }
@@ -821,7 +873,13 @@ function applyConfig() {
                 pIdX: getVal('cfg-p-id-x'), pIdY: getVal('cfg-p-id-y'),
                 pTelX: getVal('cfg-p-tel-x'), pTelY: getVal('cfg-p-tel-y'),
                 pMailX: getVal('cfg-p-mail-x'), pMailY: getVal('cfg-p-mail-y'),
-                pBarX: getVal('cfg-p-bar-x'), pBarY: getVal('cfg-p-bar-y')
+                pBarX: getVal('cfg-p-bar-x'), pBarY: getVal('cfg-p-bar-y'),
+                sFotoW: getVal('cfg-s-foto-w'), sFotoH: getVal('cfg-s-foto-h'),
+                sNome: getVal('cfg-s-nome'),
+                sId: getVal('cfg-s-id'),
+                sTel: getVal('cfg-s-tel'),
+                sMail: getVal('cfg-s-mail'),
+                sBarW: getVal('cfg-s-bar-w'), sBarH: getVal('cfg-s-bar-h')
             }; 
             syncDB(); 
             await cloudSave('saveConfig', database.config);
@@ -1057,7 +1115,7 @@ function applyConfig() {
         let currentBook = null;
         function openEtiquetaModal(id) { currentBook = database.books.find(x => x.ID_Livro === id); if(!currentBook) return; document.getElementById('lbl-titulo').innerText = currentBook.Titulo; document.getElementById('lbl-autor').innerText = currentBook.Autor; document.getElementById('lbl-editora').innerText = currentBook.Editora; document.getElementById('lbl-ano').innerText = currentBook.Ano; document.getElementById('lbl-isbn').innerText = currentBook.ISBN; document.getElementById('lbl-id').innerText = currentBook.ID_Livro; const cin = document.getElementById('print-copy-num'); cin.max = currentBook.Quantidade_Total; cin.value = 1; document.getElementById('print-copy-total').innerText = ` de ${currentBook.Quantidade_Total}`; updateEtiquetaQR(); document.getElementById('modal-etiqueta').classList.add('active'); }
         function updateEtiquetaQR() { if(!currentBook) return; const n = document.getElementById('print-copy-num').value; document.getElementById('lbl-exemplar-id').innerText = `Exemplar ${n}`; const qrTarget = document.getElementById('qrcode-canvas-book'); qrTarget.innerHTML = ''; new QRCode(qrTarget, { text: `${currentBook.ID_Livro}/${n}`, width: 100, height: 100, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); }
-       function openCarteirinhaModal(id) {
+    function openCarteirinhaModal(id) {
             const u = database.users.find(x => x.ID_Usuario === id); if(!u) return;
             
             document.getElementById('card-nome').innerText = u.Nome_Completo; 
@@ -1079,10 +1137,15 @@ function applyConfig() {
             const qrContainer = document.getElementById('card-qr-container'); 
             if (database.config.showQRCarteirinha !== false) { 
                 qrContainer.style.display = 'block'; 
+                
+                // Resgata o tamanho salvo ou usa o padrão fino (1/25)
+                const barW = database.config.sBarW ? parseInt(database.config.sBarW) : 1; 
+                const barH = database.config.sBarH ? parseInt(database.config.sBarH) : 25; 
+                
                 JsBarcode("#barcode-canvas", u.ID_Usuario, { 
                     format: "CODE128", 
-                    width: 2, 
-                    height: 35, 
+                    width: barW, 
+                    height: barH, 
                     displayValue: false, 
                     margin: 0,
                     lineColor: "#000000"
