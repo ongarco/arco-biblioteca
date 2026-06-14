@@ -348,11 +348,11 @@
                         </div>
                         <div class="form-group"><label>Devolução Prevista</label><input type="date" id="loan-data-previsao" required></div>
                         <div class="form-group"><button type="submit" class="btn btn-pulse">Registrar Empréstimo</button></div>
-                    </div>
-                </form>
-                <div class="box-container">
-                    <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap:10px;">
-                        <h3 style="margin:0; border:none; padding:0;">Histórico e Pendências</h3>
+            </div>
+        </form>
+        </div> <div class="box-container">
+            <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap:10px;">
+                <h3 style="margin:0; border:none; padding:0;">Histórico e Pendências</h3>
                         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                             <input type="text" id="search-loan-input" placeholder="Buscar leitor, livro, cód..." onkeyup="renderLoansSection()" style="padding:6px; border:1px solid #ccc; border-radius:4px; min-width:220px;">
                             <div>
@@ -497,10 +497,10 @@
                             <div id="card-foto" class="carteirinha-foto"></div>
                             <div id="card-qr-container" class="carteirinha-qr-area">
                                 <div id="qrcode-canvas-user" style="width:55px; height:55px;"></div>
-                                <span style="font-size:7px; font-weight:bold; margin-top:2px; color:#333;">SCAN-ME</span>
-                            </div>
-                        </div>
-                    <div class="carteirinha-dados">
+                        <span style="font-size:7px; font-weight:bold; margin-top:2px; color:#333;">SCAN-ME</span>
+                    </div>
+                </div>
+            <div class="carteirinha-dados">
                             <div class="carteirinha-nome"><strong>LEITOR(A)</strong><span id="card-nome"></span></div>
                             <div class="carteirinha-campo"><strong>ID:</strong> <span id="card-id" style="font-family:monospace; font-weight:bold;"></span></div>
                             <div class="carteirinha-campo"><strong>FONE:</strong> <span id="card-whatsapp"></span></div>
@@ -1044,10 +1044,10 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             scanner.render((t, r) => { 
                 closeScannerModal(); 
                 if (t.startsWith('USR-')) { 
-                    switchTab('leitores'); 
+                    switchTab('usuarios'); 
                     setTimeout(() => { openUserProfile(t); }, 200);
                 } else if (t.startsWith('LIV-')) { 
-                    switchTab('acervo'); 
+                    switchTab('livros'); 
                     setTimeout(() => { openBookProfile(t.split('/')[0]); }, 200);
                 } else { 
                     alert("QR Code não reconhecido pelo sistema."); 
