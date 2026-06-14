@@ -129,15 +129,16 @@
         .carteirinha-wrapper { display: flex; justify-content: center; margin: 15px 0; }
         .carteirinha { width: 378px; height: 260px; background: #e2e8f0; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); text-align: left; }
         .carteirinha-moldura { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; pointer-events: none; }
-        .carteirinha-conteudo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; padding: 15px; display: grid; grid-template-columns: 90px 1fr; gap: 15px; align-items: stretch; }
-        .carteirinha-col-esq { display: flex; flex-direction: column; align-items: center; gap: 8px; }
-        .carteirinha-foto { width: 90px; height: 110px; background: #fff; border: 2px solid #fff; border-radius: 6px; object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .carteirinha-dados { display: flex; flex-direction: column; gap: 5px; height: 100%; }
-        .carteirinha-campo { background: #ffffff; color: #000000; padding: 4px; border-radius: 4px; font-size: 10px; font-weight: 500; border: 1px solid #ccc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .carteirinha-campo strong { color: #333; font-size: 9px; text-transform: uppercase; display: block; margin-bottom: 1px; }
-        .carteirinha-nome { font-size: 11px; font-weight: bold; }
-        .carteirinha-qr-area { background: #fff; padding: 4px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); width: 100%; }
-        .carteirinha-logos { display: flex; gap: 15px; margin-top: auto; align-items: center; justify-content: flex-end; padding-right: 5px; }
+        .carteirinha-conteudo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; padding: 20px; display: flex; gap: 15px; align-items: center; }
+        .carteirinha-col-esq { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100px; }
+        .carteirinha-foto { width: 90px; height: 90px; background: #fff; border: 3px solid var(--primary); border-radius: 50%; object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .carteirinha-dados { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; height: 100%; justify-content: center; }
+        .carteirinha-campo { background: rgba(255,255,255,0.8); color: #000000; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; border: 1px solid #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .carteirinha-campo strong { color: var(--primary); font-size: 9px; text-transform: uppercase; margin-right: 4px; }
+        .carteirinha-nome { font-size: 14px; font-weight: bold; background: #fff; border-left: 4px solid var(--secondary); padding-left: 8px; border-radius: 4px; border: 1px solid #ccc; padding: 6px;}
+        .carteirinha-nome strong { display: block; font-size: 8px; margin-bottom: 2px; }
+        .carteirinha-qr-area { background: #fff; padding: 5px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .carteirinha-logos { display: flex; gap: 10px; margin-top: 5px; align-items: center; justify-content: flex-end; }
         .carteirinha-logos img { object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.1)); }
         
         .comprovante { border: 2px solid var(--primary); padding: 20px; border-radius: 8px; text-align: left; background: #fff; color: #000; font-size: 14px; }
@@ -300,8 +301,13 @@
                             <select id="l-categoria" required><option value="">Selecione uma categoria...</option></select>
                         </div>
                         
-                        <div class="form-group"><label>ISBN *</label><input type="text" id="l-isbn" required></div>
-                        <div class="form-group"><label>Quantidade Física Total *</label><input type="number" id="l-quantidade" min="1" value="1" required></div>
+                     <div class="form-group"><label>ISBN *</label><input type="text" id="l-isbn" required></div>
+                        <div class="form-group"><label>Status da Obra *</label><select id="l-status-livro" required><option value="Ativo">Ativo</option><option value="Inativo">Inativo (Não Emprestar)</option></select></div>
+                        
+                        <div class="form-group"><label>Qtd. P/ Empréstimo *</label><input type="number" id="l-qtd-emprestimo" min="0" value="1" required></div>
+                        <div class="form-group"><label>Qtd. P/ Consulta Local *</label><input type="number" id="l-qtd-consulta" min="0" value="0" required></div>
+                        <div class="form-group"><label>Qtd. Perdida/Danificada *</label><input type="number" id="l-qtd-perdido" min="0" value="0" required></div>
+                        
                         <div class="form-group span-3" style="text-align: right; margin-top: 10px;">
                             <button type="button" class="btn btn-danger" id="btn-cancel-book" style="display:none; margin-right:10px;" onclick="cancelEditBook()">Cancelar</button>
                             <button type="submit" class="btn btn-pulse" id="btn-submit-book">Catalogar Obra</button>
@@ -485,17 +491,48 @@
                                 <span style="font-size:7px; font-weight:bold; margin-top:2px; color:#333;">SCAN-ME</span>
                             </div>
                         </div>
-                       <div class="carteirinha-dados">
-                            <div class="carteirinha-campo carteirinha-nome"><strong style="font-size:8px;">Leitor(a)</strong><span id="card-nome"></span></div>
-                            <div class="carteirinha-campo"><strong>ID do Sistema</strong><span id="card-id" style="font-family:monospace; font-weight:bold;"></span></div>
-                            <div class="carteirinha-campo"><strong>WhatsApp</strong><span id="card-whatsapp"></span></div>
-                            <div class="carteirinha-campo"><strong>E-mail</strong><span id="card-email"></span></div>
+                    <div class="carteirinha-dados">
+                            <div class="carteirinha-nome"><strong>LEITOR(A)</strong><span id="card-nome"></span></div>
+                            <div class="carteirinha-campo"><strong>ID:</strong> <span id="card-id" style="font-family:monospace; font-weight:bold;"></span></div>
+                            <div class="carteirinha-campo"><strong>FONE:</strong> <span id="card-whatsapp"></span></div>
+                            <div class="carteirinha-campo"><strong>MAIL:</strong> <span id="card-email"></span></div>
                             <div class="carteirinha-logos">
                                 <img id="card-logo-arco" style="width: 40px; height: 40px; display: none;">
                                 <img id="card-logo-biblio" style="width: 25px; height: 40px; display: none;">
                             </div>
                         </div>
                     </div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportCarteirinhaPDF()">🪪 Salvar Carteirinha 10x6.9cm</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-carteirinha')">Fechar</button></div></div></div>
+
+    <div id="modal-perfil-livro" class="preview-overlay">
+        <div class="preview-box" style="max-width: 800px;">
+            <h3 style="color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 10px;">Ficha da Obra</h3>
+            <div style="display: flex; gap: 20px; text-align: left; margin-bottom: 20px; flex-wrap: wrap;">
+                <img id="perfil-livro-foto" style="width: 110px; height: 150px; border-radius: 4px; object-fit: cover; border: 1px solid #ccc; background:#eee;">
+                <div>
+                    <h4 id="perfil-livro-titulo" style="margin: 0 0 5px 0; font-size: 20px;"></h4>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>Autor:</strong> <span id="perfil-livro-autor"></span></p>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>Editora/Ano:</strong> <span id="perfil-livro-editora"></span></p>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>ID Mestre:</strong> <span id="perfil-livro-id" style="font-family:monospace;"></span></p>
+                    <p style="margin: 0; font-size: 13px; color: #555;"><strong>Status:</strong> <span id="perfil-livro-status"></span></p>
+                    <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                        <span class="badge badge-ativo">Empréstimo: <span id="perfil-livro-emp">0</span></span>
+                        <span class="badge badge-pendente">Consulta: <span id="perfil-livro-cons">0</span></span>
+                        <span class="badge badge-atraso">Perdidos: <span id="perfil-livro-perd">0</span></span>
+                    </div>
+                </div>
+            </div>
+            <h4 style="text-align: left; margin-bottom: 10px; color: var(--primary);">Histórico de Empréstimos desta Obra</h4>
+            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+                <table style="font-size: 12px;">
+                    <thead><tr><th>Leitor</th><th>Retirada</th><th>Devolução Prev.</th><th>Devolução Real</th><th>Status</th></tr></thead>
+                    <tbody id="perfil-livro-historico-body"></tbody>
+                </table>
+            </div>
+            <div class="preview-actions">
+                <button class="btn btn-danger" onclick="closeModal('modal-perfil-livro')">Fechar Ficha</button>
+            </div>
+        </div>
+    </div>
 
     <div id="modal-perfil-leitor" class="preview-overlay">
         <div class="preview-box" style="max-width: 800px;">
@@ -543,13 +580,16 @@
             
             // INTEGRAÇÃO NUVEM
             document.getElementById('cloud-loader').style.display = 'flex';
-            try {
+         try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
-                if(data.users) database.users = data.users;
-                if(data.books) database.books = data.books;
-                if(data.loans) database.loans = data.loans;
-                if(data.sysAccess) database.sysAccess = data.sysAccess;
+                
+                // Força o espelhamento: se a nuvem estiver vazia, limpa o sistema
+                database.users = data.users || [];
+                database.books = data.books || [];
+                database.loans = data.loans || [];
+                database.sysAccess = data.sysAccess || [{ user: 'admin', pass: 'admin' }];
+                
                 if(data.config && Object.keys(data.config).length > 0) { database.config = data.config; loadConfigAndApply(); }
                 syncDB();
                 updateDashboardCounters(); renderUsersTable(); renderBooksTable(); renderLoansSection(); renderSysUsersList();
@@ -763,21 +803,68 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             }
             document.getElementById('modal-perfil-leitor').classList.add('active');
         }
-        async function saveBook(e) {
-            e.preventDefault(); const editId = document.getElementById('editing-book-id').value; const qty = parseInt(document.getElementById('l-quantidade').value);
-            let obj = { Titulo: document.getElementById('l-titulo').value, Autor: document.getElementById('l-autor').value, Editora: document.getElementById('l-editora').value, Ano: document.getElementById('l-ano').value, Categoria: document.getElementById('l-categoria').value, ISBN: document.getElementById('l-isbn').value, Quantidade_Total: qty, Foto_Capa: document.getElementById('l-foto-b64').value };
-            if (editId) { const idx = database.books.findIndex(b => b.ID_Livro === editId); obj.Estoque_Atual = database.books[idx].Estoque_Atual + (qty - database.books[idx].Quantidade_Total); obj.ID_Livro = editId; if(!obj.Foto_Capa) obj.Foto_Capa = database.books[idx].Foto_Capa; database.books[idx] = obj; await cloudSave('saveBook', obj); alert('Atualizado!'); cancelEditBook(); } else { obj.ID_Livro = generateID('LIV'); obj.Estoque_Atual = qty; database.books.push(obj); await cloudSave('saveBook', obj); alert(`Catalogado! ID: ${obj.ID_Livro}`); document.getElementById('form-book').reset(); } document.getElementById('btn-submit-book').innerText = "Catalogar Obra"; document.getElementById('btn-submit-book').classList.remove('active'); document.getElementById('ai-status').innerText=''; document.getElementById('ai-catalog-file').value=''; syncDB(); renderBooksTable(); renderLoansSection();
+      async function saveBook(e) {
+            e.preventDefault(); const editId = document.getElementById('editing-book-id').value; 
+            const qEmp = parseInt(document.getElementById('l-qtd-emprestimo').value) || 0;
+            const qCons = parseInt(document.getElementById('l-qtd-consulta').value) || 0;
+            const qPerd = parseInt(document.getElementById('l-qtd-perdido').value) || 0;
+            const total = qEmp + qCons + qPerd;
+            
+            let obj = { Titulo: document.getElementById('l-titulo').value, Autor: document.getElementById('l-autor').value, Editora: document.getElementById('l-editora').value, Ano: document.getElementById('l-ano').value, Categoria: document.getElementById('l-categoria').value, ISBN: document.getElementById('l-isbn').value, Qtd_Emprestimo: qEmp, Qtd_Consulta: qCons, Qtd_Perdido: qPerd, Quantidade_Total: total, Status: document.getElementById('l-status-livro').value, Foto_Capa: document.getElementById('l-foto-b64').value };
+            
+            if (editId) { 
+                const idx = database.books.findIndex(b => b.ID_Livro === editId); 
+                obj.ID_Livro = editId; 
+                if(!obj.Foto_Capa) obj.Foto_Capa = database.books[idx].Foto_Capa; 
+                const ativos = database.loans.filter(l => l.ID_Livro === editId && l.Status_Emprestimo === 'Ativo').length;
+                obj.Estoque_Atual = qEmp - ativos;
+                if(obj.Estoque_Atual < 0) obj.Estoque_Atual = 0;
+                
+                database.books[idx] = obj; await cloudSave('saveBook', obj); alert('Atualizado!'); cancelEditBook(); 
+            } else { 
+                obj.ID_Livro = generateID('LIV'); obj.Estoque_Atual = qEmp; 
+                database.books.push(obj); await cloudSave('saveBook', obj); alert(`Catalogado! ID: ${obj.ID_Livro}`); 
+                document.getElementById('form-book').reset(); document.getElementById('l-qtd-emprestimo').value = 1; document.getElementById('l-qtd-consulta').value = 0; document.getElementById('l-qtd-perdido').value = 0;
+            } 
+            document.getElementById('btn-submit-book').innerText = "Catalogar Obra"; document.getElementById('btn-submit-book').classList.remove('active'); document.getElementById('ai-status').innerText=''; document.getElementById('ai-catalog-file').value=''; syncDB(); renderBooksTable(); renderLoansSection();
         }
-        function editBook(id) { const b = database.books.find(x => x.ID_Livro === id); if(!b) return; document.getElementById('editing-book-id').value = id; document.getElementById('form-book-title').innerText = "Editar Livro Existente"; document.getElementById('btn-submit-book').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-book').classList.add('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'inline-block'; document.getElementById('l-titulo').value = b.Titulo; document.getElementById('l-autor').value = b.Autor; document.getElementById('l-editora').value = b.Editora; document.getElementById('l-ano').value = b.Ano; const cat = document.getElementById('l-categoria'); if(b.Categoria && !Array.from(cat.options).some(o=>o.value===b.Categoria)){ const opt=document.createElement('option'); opt.value=b.Categoria; opt.innerText=b.Categoria; cat.appendChild(opt); } cat.value = b.Categoria; document.getElementById('l-isbn').value = b.ISBN; document.getElementById('l-quantidade').value = b.Quantidade_Total; window.scrollTo(0,0); }
-        function cancelEditBook() { document.getElementById('editing-book-id').value = ''; document.getElementById('form-book-title').innerText = "Inserir Novo Livro"; document.getElementById('btn-submit-book').innerText = "Catalogar Obra"; document.getElementById('btn-submit-book').classList.remove('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'none'; document.getElementById('form-book').reset(); }
-        function renderBooksTable() { const t = document.getElementById('table-books-body'); const s = document.getElementById('search-book-input').value.toLowerCase(); t.innerHTML = ''; database.books.filter(b => b.Titulo.toLowerCase().includes(s) || b.ID_Livro.toLowerCase().includes(s)).forEach(b => { const img = b.Foto_Capa ? `<img class="row-thumb" src="${b.Foto_Capa}">` : `<div class="row-thumb" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${b.ID_Livro}</td><td><strong>${b.Titulo}</strong></td><td>${b.Autor}</td><td><strong>${b.Estoque_Atual}</strong> / ${b.Quantidade_Total}</td><td style="text-align:center; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="openEtiquetaModal('${b.ID_Livro}')">🏷️ Etiqueta</button> <button class="btn btn-sm btn-edit" onclick="editBook('${b.ID_Livro}')">✏️ Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteBook('${b.ID_Livro}')">🗑️ Excluir</button></td></tr>`; }); }
+        function editBook(id) { const b = database.books.find(x => x.ID_Livro === id); if(!b) return; document.getElementById('editing-book-id').value = id; document.getElementById('form-book-title').innerText = "Editar Livro Existente"; document.getElementById('btn-submit-book').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-book').classList.add('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'inline-block'; document.getElementById('l-titulo').value = b.Titulo; document.getElementById('l-autor').value = b.Autor; document.getElementById('l-editora').value = b.Editora; document.getElementById('l-ano').value = b.Ano; const cat = document.getElementById('l-categoria'); if(b.Categoria && !Array.from(cat.options).some(o=>o.value===b.Categoria)){ const opt=document.createElement('option'); opt.value=b.Categoria; opt.innerText=b.Categoria; cat.appendChild(opt); } cat.value = b.Categoria; document.getElementById('l-isbn').value = b.ISBN; document.getElementById('l-status-livro').value = b.Status || 'Ativo'; document.getElementById('l-qtd-emprestimo').value = b.Qtd_Emprestimo || b.Quantidade_Total || 0; document.getElementById('l-qtd-consulta').value = b.Qtd_Consulta || 0; document.getElementById('l-qtd-perdido').value = b.Qtd_Perdido || 0; window.scrollTo(0,0); }
+        function cancelEditBook() { document.getElementById('editing-book-id').value = ''; document.getElementById('form-book-title').innerText = "Inserir Novo Livro"; document.getElementById('btn-submit-book').innerText = "Catalogar Obra"; document.getElementById('btn-submit-book').classList.remove('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'none'; document.getElementById('form-book').reset(); document.getElementById('l-qtd-emprestimo').value = 1; document.getElementById('l-qtd-consulta').value = 0; document.getElementById('l-qtd-perdido').value = 0; }
+        
+        function openBookProfile(id) {
+            const b = database.books.find(x => x.ID_Livro === id); if(!b) return;
+            document.getElementById('perfil-livro-foto').src = b.Foto_Capa ? b.Foto_Capa : "";
+            document.getElementById('perfil-livro-titulo').innerText = b.Titulo;
+            document.getElementById('perfil-livro-autor').innerText = b.Autor;
+            document.getElementById('perfil-livro-editora').innerText = `${b.Editora} / ${b.Ano}`;
+            document.getElementById('perfil-livro-id').innerText = b.ID_Livro;
+            document.getElementById('perfil-livro-status').innerHTML = `<span class="badge ${b.Status==='Inativo'?'badge-atraso':'badge-ativo'}">${b.Status || 'Ativo'}</span>`;
+            document.getElementById('perfil-livro-emp').innerText = b.Qtd_Emprestimo || b.Quantidade_Total || 0;
+            document.getElementById('perfil-livro-cons').innerText = b.Qtd_Consulta || 0;
+            document.getElementById('perfil-livro-perd').innerText = b.Qtd_Perdido || 0;
+            
+            const t = document.getElementById('perfil-livro-historico-body'); t.innerHTML = '';
+            const bookLoans = database.loans.filter(l => l.ID_Livro === id).reverse();
+            if (bookLoans.length === 0) { t.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhum empréstimo registrado.</td></tr>'; }
+            else {
+                bookLoans.forEach(l => {
+                    const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario);
+                    const isDev = l.Status_Emprestimo === 'Devolvido';
+                    t.innerHTML += `<tr><td>${u?u.Nome_Completo:'Leitor Removido'}</td><td>${l.Data_Retirada}</td><td>${l.Data_Prevista_Devolucao}</td><td style="color:${isDev?'#18BC9C':'-'}; font-weight:bold;">${l.Data_Entrega_Real || '-'}</td><td><span class="badge ${isDev?'badge-ativo':'badge-pendente'}">${l.Status_Emprestimo}</span></td></tr>`;
+                });
+            }
+            document.getElementById('modal-perfil-livro').classList.add('active');
+        }
+
+        function renderBooksTable() { const t = document.getElementById('table-books-body'); const s = document.getElementById('search-book-input').value.toLowerCase(); t.innerHTML = ''; database.books.filter(b => b.Titulo.toLowerCase().includes(s) || b.ID_Livro.toLowerCase().includes(s)).forEach(b => { const img = b.Foto_Capa ? `<img class="row-thumb" src="${b.Foto_Capa}">` : `<div class="row-thumb" style="background:#ccc;"></div>`; const stBadge = b.Status === 'Inativo' ? `<br><span class="badge badge-atraso" style="margin-top:4px;">INATIVO</span>` : ''; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${b.ID_Livro}${stBadge}</td><td><strong>${b.Titulo}</strong></td><td>${b.Autor}</td><td><strong>${b.Estoque_Atual}</strong> / ${b.Qtd_Emprestimo || b.Quantidade_Total} <br><span style="font-size:10px; color:#666;">(Cons: ${b.Qtd_Consulta||0})</span></td><td style="text-align:center; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;"><button class="btn btn-sm" style="background:#3498db;" onclick="openBookProfile('${b.ID_Livro}')">📖 Ficha</button> <button class="btn btn-sm btn-primary" onclick="openEtiquetaModal('${b.ID_Livro}')">🏷️ Etiqueta</button> <button class="btn btn-sm btn-edit" onclick="editBook('${b.ID_Livro}')">✏️ Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteBook('${b.ID_Livro}')">🗑️ Excluir</button></td></tr>`; }); }
         
         async function deleteBook(id) { if(confirm("CUIDADO: Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este livro?")) { const idx = database.books.findIndex(b => b.ID_Livro === id); if(idx !== -1) { database.books.splice(idx, 1); await cloudSave('deleteBook', { ID_Livro: id }); syncDB(); renderBooksTable(); updateDashboardCounters(); alert("Livro excluído com sucesso!"); } } }
         function setDefaultLoanDate() { const d = new Date(); d.setDate(d.getDate() + 7); document.getElementById('loan-data-previsao').value = d.toISOString().split('T')[0]; }
+        
         function renderLoansSection() { 
             const uSel = document.getElementById('loan-usuario'); const bSel = document.getElementById('loan-livro'); 
             uSel.innerHTML = '<option value="">-- Selecione o Leitor --</option>'; database.users.filter(u => u.Status === 'Ativo').forEach(u => uSel.innerHTML += `<option value="${u.ID_Usuario}">${u.Nome_Completo} (${u.ID_Usuario})</option>`); 
-            bSel.innerHTML = '<option value="">-- Selecione a Obra --</option>'; database.books.filter(b => b.Estoque_Atual > 0).forEach(b => bSel.innerHTML += `<option value="${b.ID_Livro}">${b.Titulo} (Disp: ${b.Estoque_Atual})</option>`); 
+            bSel.innerHTML = '<option value="">-- Selecione a Obra --</option>'; database.books.filter(b => b.Estoque_Atual > 0 && b.Status !== 'Inativo').forEach(b => bSel.innerHTML += `<option value="${b.ID_Livro}">${b.Titulo} (Disp p/ Emp: ${b.Estoque_Atual})</option>`); 
             const opFilter = document.getElementById('filter-operador'); const currentFilter = opFilter.value; opFilter.innerHTML = '<option value="">Todos</option>'; database.sysAccess.forEach(acc => { opFilter.innerHTML += `<option value="${acc.user}">${acc.user}</option>`; }); opFilter.value = currentFilter; 
             const t = document.getElementById('table-loans-body'); t.innerHTML = ''; 
             
@@ -785,7 +872,7 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             
             let filteredLoans = database.loans.filter(l => {
                 const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); const b = database.books.find(x => x.ID_Livro === l.ID_Livro);
-                const term = searchStr.replace('usr-', '').replace('liv-', '').replace('emp-', ''); // Ignora prefixos automaticamente
+                const term = searchStr.replace('usr-', '').replace('liv-', '').replace('emp-', '');
                 const matchSearch = !term || (u && u.Nome_Completo.toLowerCase().includes(term)) || (b && b.Titulo.toLowerCase().includes(term)) || l.ID_Emprestimo.toLowerCase().includes(term) || l.ID_Usuario.toLowerCase().includes(term) || l.ID_Livro.toLowerCase().includes(term);
                 const matchOp = !currentFilter || l.Operador === currentFilter;
                 return matchSearch && matchOp;
@@ -797,7 +884,7 @@ async function processGeminiAnalysis(base64Data, mimeType) {
                 const btnHtml = isDev ? `<span style="color:#18BC9C; font-weight:bold; font-size:12px;">✔️ Entregue</span>` : `<button class="btn btn-sm btn-danger" onclick="registerReturn('${l.ID_Emprestimo}')">Devolver</button>`;
                 t.innerHTML += `<tr><td style="font-family:monospace;">${l.ID_Emprestimo}</td><td>${u?u.Nome_Completo:'-'}</td><td>${b?b.Titulo:'-'}</td><td>${l.Data_Retirada}</td><td>${l.Data_Prevista_Devolucao}</td><td style="font-weight:bold; color:#7f8c8d;">${l.Operador || 'admin'}</td><td><span class="badge ${isDev?'badge-ativo':'badge-pendente'}">${l.Status_Emprestimo}</span></td><td>${btnHtml}</td></tr>`; 
             }); 
-        }        
+        }
         async function createLoan(e) {
             e.preventDefault(); const idU = document.getElementById('loan-usuario').value; const idB = document.getElementById('loan-livro').value; const dataPrev = document.getElementById('loan-data-previsao').value;
             const b = database.books.find(x => x.ID_Livro === idB); const u = database.users.find(x => x.ID_Usuario === idU); if(b.Estoque_Atual <= 0) return alert('Esgotado!'); b.Estoque_Atual--;
@@ -885,7 +972,43 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             }); 
         }
         function exportCarteirinhaPDF() { html2canvas(document.getElementById('print-carteirinha-target'), { scale: 3 }).then(canvas => { const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'cm', format: [10, 6.9] }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 10, 6.9); pdf.save(`Carteirinha_${document.getElementById('card-id').innerText}.pdf`); }); }
-        async function exportAllLabelsPDF() { if(!currentBook) return; const total = currentBook.Quantidade_Total; const pdf = new window.jspdf.jsPDF('l', 'mm', 'a4'); const target = document.getElementById('print-etiqueta-target'); const currCopy = document.getElementById('print-copy-num').value; for(let i=1; i<=total; i++) { document.getElementById('print-copy-num').value = i; updateEtiquetaQR(); await new Promise(r => setTimeout(r, 150)); const canvas = await html2canvas(target, { scale: 2 }); if(i > 1) pdf.addPage(); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 15, 110, 65); } pdf.save(`Etiquetas_${currentBook.ID_Livro}.pdf`); document.getElementById('print-copy-num').value = currCopy; updateEtiquetaQR(); }
-    </script>
+        async function exportAllLabelsPDF() { 
+            if(!currentBook) return; 
+            const total = (currentBook.Qtd_Emprestimo || 0) + (currentBook.Qtd_Consulta || 0) + (currentBook.Qtd_Perdido || 0) || currentBook.Quantidade_Total; 
+            const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4'); 
+            const target = document.getElementById('print-etiqueta-target'); 
+            const currCopy = document.getElementById('print-copy-num').value; 
+            
+            const startX = 15; const startY = 15; const colWidth = 90; const rowHeight = 55;
+            
+            for(let i=1; i<=total; i++) { 
+                document.getElementById('print-copy-num').value = i; 
+                
+                const tHeader = document.querySelector('.etiqueta-header');
+                const origHeader = tHeader.innerText;
+                const limitEmp = currentBook.Qtd_Emprestimo || currentBook.Quantidade_Total;
+                if(i <= limitEmp) tHeader.innerText = origHeader + " (EMPRÉSTIMO)";
+                else tHeader.innerText = origHeader + " (CONSULTA LOCAL)";
+                
+                updateEtiquetaQR(); 
+                await new Promise(r => setTimeout(r, 150)); 
+                const canvas = await html2canvas(target, { scale: 2 }); 
+                
+                tHeader.innerText = origHeader; 
+                
+                const zeroIndex = i - 1;
+                if(zeroIndex > 0 && zeroIndex % 10 === 0) pdf.addPage();
+                
+                const posOnPage = zeroIndex % 10;
+                const col = posOnPage % 2; 
+                const row = Math.floor(posOnPage / 2);
+                const x = startX + (col * colWidth);
+                const y = startY + (row * rowHeight);
+                
+                pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, 85, 50); 
+            } 
+            pdf.save(`Etiquetas_${currentBook.ID_Livro}.pdf`); 
+            document.getElementById('print-copy-num').value = currCopy; updateEtiquetaQR(); 
+        }    </script>
 </body>
 </html>
