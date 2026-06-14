@@ -413,19 +413,39 @@
                     </div>
                    <div class="form-group span-3">
                         <label>Moldura da Carteirinha (Obrigatório: 9,5cm x 6.9cm / PNG Transparente)</label>
-                        <input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-moldura')">
+                        <input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-moldura', applyConfig)">
                         <input type="hidden" id="cfg-moldura">
                     </div>
                     
                    <div class="form-group span-3" style="border-top:1px solid #ccc; padding-top:15px; margin-top:5px;">
-                        <h4 style="margin:0 0 15px 0; color:var(--primary);">Posicionamento Livre da Carteirinha (Posição Esquerda=X, Topo=Y)</h4>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px; background:rgba(0,0,0,0.02); padding:15px; border-radius:8px;">
-                            <div><label style="font-size:11px;">📷 Foto (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-foto-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-foto-y" placeholder="Topo" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">👤 Nome (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-nome-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-nome-y" placeholder="Topo" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">🆔 ID (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-id-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-id-y" placeholder="Topo" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">📱 Telefone (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-tel-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-tel-y" placeholder="Topo" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">✉️ E-mail (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-mail-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-mail-y" placeholder="Topo" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">📶 Código de Barras (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-bar-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-bar-y" placeholder="Topo" onchange="applyConfig()"></div></div>
+                        <h4 style="margin:0 0 15px 0; color:var(--primary);">Ajuste Visual da Carteirinha (Live Preview)</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <!-- Preview Visual -->
+                            <div style="flex: 1; min-width: 380px; display: flex; justify-content: center; align-items: center; background: #f0f0f0; border-radius: 8px; padding: 20px; border: 1px dashed #ccc; overflow: hidden;">
+                                <div class="carteirinha" id="preview-carteirinha-target" style="transform: scale(0.9); transform-origin: center;">
+                                    <img id="preview-overlay-img" class="carteirinha-moldura" style="display:none;">
+                                    <div class="carteirinha-conteudo">
+                                        <div id="preview-foto" class="c-foto" style="background-image: url('data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'grey\'><path d=\'M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-3.3c-8-3.3z\'/></svg>');"></div>
+                                        <div class="c-item c-nome">NOME DO LEITOR DE TESTE</div>
+                                        <div class="c-item c-id">USR-1A2B3C</div>
+                                        <div class="c-item c-tel">(11) 99999-9999</div>
+                                        <div class="c-item c-mail">email.teste@biblioteca.com</div>
+                                        <div class="c-barcode-container" id="preview-qr-container">
+                                            <canvas id="preview-barcode-canvas"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Controles de Posição (Atualizados para tempo real) -->
+                            <div style="flex: 1; min-width: 300px; display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:15px; background:rgba(0,0,0,0.02); padding:15px; border-radius:8px;">
+                                <div><label style="font-size:11px;">📷 Foto (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-foto-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-foto-y" placeholder="Y" oninput="applyConfig()"></div></div>
+                                <div><label style="font-size:11px;">👤 Nome (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-nome-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-nome-y" placeholder="Y" oninput="applyConfig()"></div></div>
+                                <div><label style="font-size:11px;">🆔 ID (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-id-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-id-y" placeholder="Y" oninput="applyConfig()"></div></div>
+                                <div><label style="font-size:11px;">📱 Telefone (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-tel-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-tel-y" placeholder="Y" oninput="applyConfig()"></div></div>
+                                <div><label style="font-size:11px;">✉️ E-mail (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-mail-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-mail-y" placeholder="Y" oninput="applyConfig()"></div></div>
+                                <div><label style="font-size:11px;">📶 Cód. Barras (Esq, Topo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-bar-x" placeholder="X" oninput="applyConfig()"><input type="number" id="cfg-p-bar-y" placeholder="Y" oninput="applyConfig()"></div></div>
+                            </div>
                         </div>
                     </div>
                     <div class="form-group span-3" style="border-top:1px solid #ccc; padding-top:15px; margin-top:5px;">
@@ -703,13 +723,14 @@ function applyConfig() {
             r.setProperty('--text', getVal('cfg-c-text') || '#333333'); 
             r.setProperty('--header-text', getVal('cfg-c-htext') || '#ffffff');
             
-            const px = (val) => val ? val + 'px' : '0px';
-            r.setProperty('--p-foto-x', px(getVal('cfg-p-foto-x'))); r.setProperty('--p-foto-y', px(getVal('cfg-p-foto-y')));
-            r.setProperty('--p-nome-x', px(getVal('cfg-p-nome-x'))); r.setProperty('--p-nome-y', px(getVal('cfg-p-nome-y')));
-            r.setProperty('--p-id-x', px(getVal('cfg-p-id-x'))); r.setProperty('--p-id-y', px(getVal('cfg-p-id-y')));
-            r.setProperty('--p-tel-x', px(getVal('cfg-p-tel-x'))); r.setProperty('--p-tel-y', px(getVal('cfg-p-tel-y')));
-            r.setProperty('--p-mail-x', px(getVal('cfg-p-mail-x'))); r.setProperty('--p-mail-y', px(getVal('cfg-p-mail-y')));
-            r.setProperty('--p-bar-x', px(getVal('cfg-p-bar-x'))); r.setProperty('--p-bar-y', px(getVal('cfg-p-bar-y')));
+            // Correção vital: se o input estiver vazio, assume posições padrões em vez de 0px
+            const px = (val, def) => (val !== undefined && val !== '') ? val + 'px' : def;
+            r.setProperty('--p-foto-x', px(getVal('cfg-p-foto-x'), '20px')); r.setProperty('--p-foto-y', px(getVal('cfg-p-foto-y'), '80px'));
+            r.setProperty('--p-nome-x', px(getVal('cfg-p-nome-x'), '130px')); r.setProperty('--p-nome-y', px(getVal('cfg-p-nome-y'), '80px'));
+            r.setProperty('--p-id-x', px(getVal('cfg-p-id-x'), '130px')); r.setProperty('--p-id-y', px(getVal('cfg-p-id-y'), '110px'));
+            r.setProperty('--p-tel-x', px(getVal('cfg-p-tel-x'), '130px')); r.setProperty('--p-tel-y', px(getVal('cfg-p-tel-y'), '140px'));
+            r.setProperty('--p-mail-x', px(getVal('cfg-p-mail-x'), '130px')); r.setProperty('--p-mail-y', px(getVal('cfg-p-mail-y'), '170px'));
+            r.setProperty('--p-bar-x', px(getVal('cfg-p-bar-x'), '130px')); r.setProperty('--p-bar-y', px(getVal('cfg-p-bar-y'), '200px'));
             
             const titleEl = document.getElementById('system-title-display');
             if(titleEl) titleEl.innerText = getVal('cfg-title');
@@ -732,6 +753,19 @@ function applyConfig() {
             
             const bgMob = getVal('cfg-bg-login-mob'); 
             if(bgMob) r.setProperty('--bg-login-mob', `url('${bgMob}')`); else r.removeProperty('--bg-login-mob');
+
+            // --- ATUALIZAÇÃO DO LIVE PREVIEW ---
+            const overlayPreview = document.getElementById('preview-overlay-img');
+            const molduraVal = getVal('cfg-moldura');
+            if(overlayPreview) {
+                if(molduraVal) { overlayPreview.src = molduraVal; overlayPreview.style.display = 'block'; }
+                else { overlayPreview.style.display = 'none'; }
+            }
+            
+            const previewCanvas = document.getElementById('preview-barcode-canvas');
+            if(previewCanvas && typeof JsBarcode !== 'undefined') {
+                try { JsBarcode(previewCanvas, "USR-1A2B3C", { format: "CODE128", width: 2, height: 35, displayValue: false, margin: 0, lineColor: "#000000" }); } catch(e) {}
+            }
         }
 
         function loadConfigAndApply() {
