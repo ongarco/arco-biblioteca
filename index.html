@@ -285,7 +285,36 @@
         <div id="panel-livros" class="panel">
             <h2 class="section-title">Catalogação de Acervo</h2>
             
-            
+            <div class="box-container">
+                <h3 id="form-book-title">Inserir Novo Livro</h3>
+                <form id="form-book" onsubmit="saveBook(event)">
+                    <input type="hidden" id="editing-book-id" value="">
+                    <div class="form-grid">
+                        <div class="form-group span-2"><label>Título da Obra *</label><input type="text" id="l-titulo" required></div>
+                        <div class="form-group">
+                            <label>Capa da Obra</label>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="openCameraModal('l-foto-b64', 0.7)">📷 Câmera / Arquivo</button>
+                            <input type="hidden" id="l-foto-b64">
+                            <span id="l-foto-status" style="font-size: 11px; color: #18BC9C; font-weight: bold; margin-top: 5px;"></span>
+                        </div>
+                        <div class="form-group"><label>Autor *</label><input type="text" id="l-autor" required></div>
+                        <div class="form-group"><label>Editora *</label><input type="text" id="l-editora" required></div>
+                        <div class="form-group"><label>Ano *</label><input type="number" id="l-ano" required></div>
+                        <div class="form-group"><label>Categoria *</label><select id="l-categoria" required><option value="">Selecione...</option></select></div>
+                        <div class="form-group"><label>ISBN</label><input type="text" id="l-isbn"></div>
+                        <div class="form-group"><label>Status *</label><select id="l-status-livro" required><option value="Ativo">Ativo</option><option value="Inativo">Inativo</option></select></div>
+                        <div class="form-group"><label>Qtd. Empréstimo *</label><input type="number" id="l-qtd-emprestimo" min="0" value="1" required></div>
+                        <div class="form-group"><label>Qtd. Consulta Local *</label><input type="number" id="l-qtd-consulta" min="0" value="0" required></div>
+                        <div class="form-group"><label>Qtd. Perdido/Danificado *</label><input type="number" id="l-qtd-perdido" min="0" value="0" required></div>
+                        
+                        <div class="form-group span-3" style="justify-content: flex-end; flex-direction: row; align-items: flex-end; margin-top: 10px;">
+                            <button type="button" class="btn btn-danger" id="btn-cancel-book" style="display:none; margin-right:10px;" onclick="cancelEditBook()">Cancelar Edição</button>
+                            <button type="submit" class="btn" id="btn-submit-book">Catalogar Obra</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
             <div class="box-container">
                 <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
                     <h3>Catálogo</h3>
