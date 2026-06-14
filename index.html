@@ -335,21 +335,21 @@
                     <h3>Novo Empréstimo</h3>
                     <p style="font-size:12px; color:#7f8c8d;">Data de devolução calculada p/ 7 dias.</p>
                     <form id="form-loan" onsubmit="createLoan(event)">
-                        <div class="form-group" style="margin-bottom:15px;">
-                            <label>Usuário *</label>
-                            <select id="loan-usuario" required></select>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 10px; align-items: end;">
+                        <div class="form-group">
+                            <label>Leitor (Busque por Nome ou ID) *</label>
+                            <input type="text" id="loan-usuario-input" list="dl-usuarios" placeholder="Ex: Maria ou USR-123" required autocomplete="off">
+                            <datalist id="dl-usuarios"></datalist>
                         </div>
-                        <div class="form-group" style="margin-bottom:15px;">
-                            <label>Livro *</label>
-                            <select id="loan-livro" required></select>
+                        <div class="form-group">
+                            <label>Obra (Busque por Título ou ID) *</label>
+                            <input type="text" id="loan-livro-input" list="dl-livros" placeholder="Ex: O Pequeno Príncipe ou LIV-123" required autocomplete="off">
+                            <datalist id="dl-livros"></datalist>
                         </div>
-                        <div class="form-group" style="margin-bottom:15px;">
-                            <label>Data Prevista *</label>
-                            <input type="date" id="loan-data-previsao" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary" style="width:100%;">Registrar Empréstimo</button>
-                    </form>
-                </div>
+                        <div class="form-group"><label>Devolução Prevista</label><input type="date" id="loan-data-previsao" required></div>
+                        <div class="form-group"><button type="submit" class="btn btn-pulse">Registrar Empréstimo</button></div>
+                    </div>
+                </form>
                 <div class="box-container">
                     <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap:10px;">
                         <h3 style="margin:0; border:none; padding:0;">Histórico e Pendências</h3>
@@ -835,7 +835,7 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             const u = database.users.find(x => x.ID_Usuario === id);
             if (!u || u.Status !== 'Ativo') return alert('Atenção: Este leitor está inativo ou bloqueado.');
             closeModal('modal-perfil-leitor'); switchTab('emprestimos');
-            setTimeout(() => { document.getElementById('loan-usuario').value = id; }, 150);
+            setTimeout(() => { document.getElementById('loan-usuario-input').value = `${u.ID_Usuario} | ${u.Nome_Completo}`; }, 150);
         }
       async function saveBook(e) {
             e.preventDefault(); const editId = document.getElementById('editing-book-id').value; 
@@ -896,7 +896,7 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             const b = database.books.find(x => x.ID_Livro === id);
             if (!b || b.Estoque_Atual <= 0 || b.Status === 'Inativo') return alert('Atenção: Esta obra não possui cópias disponíveis para empréstimo no momento.');
             closeModal('modal-perfil-livro'); switchTab('emprestimos');
-            setTimeout(() => { document.getElementById('loan-livro').value = id; }, 150);
+            setTimeout(() => { document.getElementById('loan-livro-input').value = `${b.ID_Livro} | ${b.Titulo} (Disp: ${b.Estoque_Atual})`; }, 150);
         }
 
         function renderBooksTable() { const t = document.getElementById('table-books-body'); const s = document.getElementById('search-book-input').value.toLowerCase(); t.innerHTML = ''; database.books.filter(b => b.Titulo.toLowerCase().includes(s) || b.ID_Livro.toLowerCase().includes(s)).forEach(b => { const img = b.Foto_Capa ? `<img class="row-thumb" src="${b.Foto_Capa}">` : `<div class="row-thumb" style="background:#ccc;"></div>`; const stBadge = b.Status === 'Inativo' ? `<br><span class="badge badge-atraso" style="margin-top:4px;">INATIVO</span>` : ''; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${b.ID_Livro}${stBadge}</td><td><strong>${b.Titulo}</strong></td><td>${b.Autor}</td><td><strong>${b.Estoque_Atual}</strong> / ${b.Qtd_Emprestimo || b.Quantidade_Total} <br><span style="font-size:10px; color:#666;">(Cons: ${b.Qtd_Consulta||0})</span></td><td style="text-align:center; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;"><button class="btn btn-sm" style="background:#3498db;" onclick="openBookProfile('${b.ID_Livro}')">📖 Ficha</button> <button class="btn btn-sm btn-primary" onclick="openEtiquetaModal('${b.ID_Livro}')">🏷️ Etiqueta</button> <button class="btn btn-sm btn-edit" onclick="editBook('${b.ID_Livro}')">✏️ Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteBook('${b.ID_Livro}')">🗑️ Excluir</button></td></tr>`; }); }
@@ -905,11 +905,11 @@ async function processGeminiAnalysis(base64Data, mimeType) {
         function setDefaultLoanDate() { const d = new Date(); d.setDate(d.getDate() + 7); document.getElementById('loan-data-previsao').value = d.toISOString().split('T')[0]; }
         
         function renderLoansSection() { 
-            const uSel = document.getElementById('loan-usuario'); const bSel = document.getElementById('loan-livro'); 
-            uSel.innerHTML = '<option value="">-- Selecione o Leitor --</option>'; database.users.filter(u => u.Status === 'Ativo').forEach(u => uSel.innerHTML += `<option value="${u.ID_Usuario}">${u.Nome_Completo} (${u.ID_Usuario})</option>`); 
-            bSel.innerHTML = '<option value="">-- Selecione a Obra --</option>'; database.books.filter(b => b.Estoque_Atual > 0 && b.Status !== 'Inativo').forEach(b => bSel.innerHTML += `<option value="${b.ID_Livro}">${b.Titulo} (Disp p/ Emp: ${b.Estoque_Atual})</option>`); 
+            const dlU = document.getElementById('dl-usuarios'); const dlB = document.getElementById('dl-livros'); 
+            if(dlU) { dlU.innerHTML = ''; database.users.filter(u => u.Status === 'Ativo').forEach(u => dlU.innerHTML += `<option value="${u.ID_Usuario} | ${u.Nome_Completo}">`); }
+            if(dlB) { dlB.innerHTML = ''; database.books.filter(b => b.Estoque_Atual > 0 && b.Status !== 'Inativo').forEach(b => dlB.innerHTML += `<option value="${b.ID_Livro} | ${b.Titulo} (Disp: ${b.Estoque_Atual})">`); }
             const opFilter = document.getElementById('filter-operador'); const currentFilter = opFilter.value; opFilter.innerHTML = '<option value="">Todos</option>'; database.sysAccess.forEach(acc => { opFilter.innerHTML += `<option value="${acc.user}">${acc.user}</option>`; }); opFilter.value = currentFilter; 
-            const t = document.getElementById('table-loans-body'); t.innerHTML = ''; 
+            const t = document.getElementById('table-loans-body'); t.innerHTML = '';
             
             const searchStr = document.getElementById('search-loan-input') ? document.getElementById('search-loan-input').value.toLowerCase().trim() : '';
             
@@ -929,18 +929,34 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             }); 
         }
         async function createLoan(e) {
-            e.preventDefault(); const idU = document.getElementById('loan-usuario').value; const idB = document.getElementById('loan-livro').value; const dataPrev = document.getElementById('loan-data-previsao').value;
-            const b = database.books.find(x => x.ID_Livro === idB); const u = database.users.find(x => x.ID_Usuario === idU); if(b.Estoque_Atual <= 0) return alert('Esgotado!'); b.Estoque_Atual--;
-            const today = new Date().toLocaleDateString('pt-BR'); const dpObj = new Date(dataPrev); dpObj.setDate(dpObj.getDate() + 1); const dp = dpObj.toLocaleDateString('pt-BR');
+            e.preventDefault(); 
+            const inputU = document.getElementById('loan-usuario-input').value; 
+            const inputB = document.getElementById('loan-livro-input').value; 
+            const dataPrev = document.getElementById('loan-data-previsao').value;
+            
+            const idU = inputU.includes(' | ') ? inputU.split(' | ')[0].trim() : inputU.trim();
+            const idB = inputB.includes(' | ') ? inputB.split(' | ')[0].trim() : inputB.trim();
+            
+            const b = database.books.find(x => x.ID_Livro === idB); 
+            const u = database.users.find(x => x.ID_Usuario === idU); 
+            
+            if(!b || !u) return alert("Por favor, selecione um Leitor e uma Obra válidos da lista suspensa.");
+            if(b.Estoque_Atual <= 0) return alert('Esgotado!'); b.Estoque_Atual--;
+            
+            const today = new Date().toLocaleDateString('pt-BR'); 
+            const dpObj = new Date(dataPrev); dpObj.setDate(dpObj.getDate() + 1); 
+            const dp = dpObj.toLocaleDateString('pt-BR');
             const lId = generateID('EMP'); const op = loggedInOperator || 'admin';
+            
             let loanObj = { ID_Emprestimo: lId, ID_Usuario: idU, ID_Livro: idB, Data_Retirada: today, Data_Prevista_Devolucao: dp, Status_Emprestimo: 'Ativo', Operador: op };
             database.loans.push(loanObj); database.fluxo.unshift({ data: today, operacao: 'SAÍDA (Empréstimo)', livro: b.Titulo, usuario: u.Nome_Completo, responsavel: op });
             await cloudSave('saveLoan', loanObj); await cloudSave('saveBook', b);
             
-            // Dispara Email Invisível
             if(u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Empréstimo - ${database.config.title || 'Biblioteca'}`, message: `Olá ${u.Nome_Completo},\n\nEste é o comprovante do seu empréstimo.\n\n📚 Obra: ${b.Titulo}\n📅 Retirada: ${today}\n⏳ Devolução Prevista: ${dp}\n\nLembre-se de devolver no prazo para evitar multas/bloqueios.\nBoa leitura!` }); }
             
-            syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); document.getElementById('form-loan').reset(); setDefaultLoanDate(); showComprovante('EMPRÉSTIMO DE LIVRO', u.Nome_Completo, u.ID_Usuario, b.Titulo, today, dp, null, op);
+            syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); 
+            document.getElementById('form-loan').reset(); setDefaultLoanDate(); 
+            showComprovante('EMPRÉSTIMO DE LIVRO', u.Nome_Completo, u.ID_Usuario, b.Titulo, today, dp, null, op);
         }
         async function registerReturn(id) {
             const lIdx = database.loans.findIndex(x => x.ID_Emprestimo === id); if(lIdx === -1) return; const l = database.loans[lIdx]; const b = database.books.find(x => x.ID_Livro === l.ID_Livro); const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); 
@@ -1016,7 +1032,27 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             document.getElementById('modal-carteirinha').classList.add('active');
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        let scanner; function openScannerModal() { document.getElementById('modal-scanner').classList.add('active'); scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); scanner.render((t, r) => { closeScannerModal(); switchTab('emprestimos'); if (t.startsWith('USR-')) { document.getElementById('loan-usuario').value = t; alert("Leitor Selecionado!"); } else if (t.startsWith('LIV-')) { document.getElementById('loan-livro').value = t.split('/')[0]; alert("Obra Selecionada!"); } }, () => {}); } function closeScannerModal() { document.getElementById('modal-scanner').classList.remove('active'); if(scanner) scanner.clear(); }
+       let scanner; 
+        function openScannerModal() { 
+            document.getElementById('modal-scanner').classList.add('active'); 
+            scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); 
+            scanner.render((t, r) => { 
+                closeScannerModal(); 
+                if (t.startsWith('USR-')) { 
+                    switchTab('leitores'); 
+                    setTimeout(() => { openUserProfile(t); }, 200);
+                } else if (t.startsWith('LIV-')) { 
+                    switchTab('acervo'); 
+                    setTimeout(() => { openBookProfile(t.split('/')[0]); }, 200);
+                } else { 
+                    alert("QR Code não reconhecido pelo sistema."); 
+                } 
+            }, () => {}); 
+        } 
+        function closeScannerModal() { 
+            document.getElementById('modal-scanner').classList.remove('active'); 
+            if(scanner) scanner.clear(); 
+        }
         function exportElementToPDF(eid, name) { 
             html2canvas(document.getElementById(eid), { scale: 2 }).then(canvas => { 
                 const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4'); 
