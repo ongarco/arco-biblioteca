@@ -13,7 +13,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
-    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>    
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>    
     <style>
         /* Variáveis de estilo Customizáveis */
         :root { --primary: #2C3E50; --secondary: #18BC9C; --bg: #F4F6F9; --text: #333333; --header-text: #ffffff; --panel-bg: #ffffff; }
@@ -70,7 +72,12 @@
         .box-container h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
 
        /* Tabelas */
-        .table-responsive { overflow-x: auto; overflow-y: auto; max-height: 450px; width: 100%; margin-top: 15px; border: 1px solid #eee; border-radius: 4px; }
+        /* Tabelas */
+        .table-responsive { overflow-x: auto; overflow-y: auto; max-height: 450px; width: 100%; margin-top: 15px; border: 1px solid #eee; border-radius: 4px; display: block; }
+        .table-responsive::-webkit-scrollbar { width: 8px; height: 8px; }
+        .table-responsive::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .table-responsive::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        .table-responsive::-webkit-scrollbar-thumb:hover { background: var(--secondary); }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; background: var(--panel-bg); position: relative; }
         table th { background: #f8f9fa; padding: 12px; color: var(--primary); font-weight: 600; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); }
         table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
@@ -177,7 +184,7 @@
         <button id="nav-livros" onclick="switchTab('livros')">Gestão do Acervo</button>
         <button id="nav-emprestimos" onclick="switchTab('emprestimos')">Empréstimos e Devoluções</button>
         <button id="nav-config" onclick="switchTab('config')">Configurações e Acessos</button>
-        <button class="btn-scan-nav" onclick="openScannerModal()">📷 Ler QR Code</button>
+        <button class="btn-scan-nav" onclick="openScannerModal()">📷 Ler Código de Barras / QR</button>
         <button onclick="handleLogout()" style="margin-left: auto; color: #e74c3c;">Sair</button>
     </nav>
 
@@ -214,7 +221,12 @@
                     <input type="hidden" id="editing-user-id" value="">
                     <div class="form-grid">
                         <div class="form-group span-2"><label>Nome Completo *</label><input type="text" id="u-nome" required></div>
-                        <div class="form-group"><label>Foto do Perfil</label><input type="file" id="u-foto" accept="image/*" onchange="processFileToBase64(this, 'u-foto-b64')"><input type="hidden" id="u-foto-b64"></div>
+                        <div class="form-group">
+                            <label>Foto do Perfil</label>
+                            <button type="button" class="btn btn-sm btn-primary" onclick="openCameraModal('u-foto-b64', 0.75)">📷 Câmera / Arquivo</button>
+                            <input type="hidden" id="u-foto-b64">
+                            <span id="u-foto-status" style="font-size: 11px; color: #18BC9C; font-weight: bold; margin-top: 5px;"></span>
+                        </div>
                         <div class="form-group"><label>E-mail *</label><input type="email" id="u-email" required></div>
                         <div class="form-group"><label>WhatsApp *</label><input type="text" id="u-whatsapp" placeholder="(00) 00000-0000" required></div>
                         
@@ -488,7 +500,28 @@
     
 
     <div id="modal-scanner" class="preview-overlay"><div class="preview-box"><h3>Câmera Leitora</h3><div id="reader"></div><div class="preview-actions"><button class="btn btn-danger" onclick="closeScannerModal()">Fechar Câmera</button></div></div></div>
-    
+    <div id="modal-camera-crop" class="preview-overlay">
+        <div class="preview-box" style="max-width: 600px;">
+            <h3 style="color: var(--primary);">Captura e Ajuste de Foto</h3>
+            
+            <div style="width: 100%; max-height: 400px; background: #eee; display: flex; justify-content: center; align-items: center; overflow: hidden; border-radius: 8px; border: 1px solid #ccc;">
+                <video id="camera-video" autoplay style="display: none; max-width: 100%;"></video>
+                <img id="image-to-crop" style="display: none; max-width: 100%;">
+            </div>
+
+            <div class="preview-actions">
+                <button class="btn btn-primary" id="btn-start-camera" onclick="startCamera()">📷 Ligar Câmera</button>
+                <label class="btn" style="background: #3498db; cursor: pointer; margin:0;">
+                    📁 Escolher Arquivo
+                    <input type="file" id="upload-crop-file" accept="image/*" style="display: none;" onchange="loadCropperFromFile(this)">
+                </label>
+                
+                <button class="btn" style="background: #e67e22; display: none;" id="btn-take-photo" onclick="takePhoto()">📸 Tirar Foto</button>
+                <button class="btn" style="background: #27ae60; display: none;" id="btn-confirm-crop" onclick="confirmCrop()">✅ Cortar e Salvar</button>
+                <button class="btn btn-danger" onclick="closeCameraModal()">Cancelar</button>
+            </div>
+        </div>
+    </div>
     <div id="modal-comprovante" class="preview-overlay"><div class="preview-box"><div class="comprovante" id="print-comprovante-target"><h3 id="comp-tipo">Comprovante de Operação</h3><div class="comp-linha"><strong>Leitor:</strong> <span id="comp-user"></span></div><div class="comp-linha"><strong>Documento ID:</strong> <span id="comp-userid"></span></div><div class="comp-linha"><strong>Obra / Livro:</strong> <span id="comp-book"></span></div><div class="comp-linha"><strong>Operador Responsável:</strong> <span id="comp-operador"></span></div><div class="comp-linha"><strong>Data da Transação:</strong> <span id="comp-data-hoje"></span></div><div class="comp-linha"><strong>Devolução Prevista:</strong> <span id="comp-data-prev"></span></div><div class="comp-linha" id="comp-linha-ent" style="display:none; color:var(--secondary);"><strong>Data de Entrega Real:</strong> <span id="comp-data-ent"></span></div>
 <div style="background:#fef9e7; border:1px solid #f1c40f; padding:10px; border-radius:6px; margin-top:15px; font-size:11px; text-align:justify; color:#555;">
     <strong>Aviso Importante:</strong> Atrasos na devolução impedem que outras pessoas acessem o livro. Para incentivar o compromisso com nossa comunidade, nosso sistema bloqueia a retirada de novas obras em caso de empréstimos vencidos. Em caso de atraso, conta-se uma multa de R$ 0,50 por dia, cujo não pagamento também gera bloqueio de novas retiradas.
@@ -817,16 +850,19 @@ function applyConfig() {
         }
         async function saveUser(e) {
             e.preventDefault(); const editId = document.getElementById('editing-user-id').value;
+            const hojeObj = new Date();
+            const dataCravada = String(hojeObj.getDate()).padStart(2, '0') + '/' + String(hojeObj.getMonth() + 1).padStart(2, '0') + '/' + hojeObj.getFullYear();
+            
             let obj = { Nome_Completo: document.getElementById('u-nome').value, Email: document.getElementById('u-email').value, Telefone_WhatsApp: document.getElementById('u-whatsapp').value, Endereco_CEP: document.getElementById('u-cep').value, Endereco_Rua: document.getElementById('u-rua').value, Endereco_Numero: document.getElementById('u-numero').value, Endereco_Bairro: document.getElementById('u-bairro').value, Endereco_Cidade: document.getElementById('u-cidade').value, Endereco_Estado: document.getElementById('u-estado').value, Identidade_Genero: document.getElementById('u-genero').value, Orientacao_Sexual: document.getElementById('u-orientacao').value, Raca_Etnia: document.getElementById('u-raca').value, Escolaridade: document.getElementById('u-escolaridade').value, Programas_Governo_CADUnico: document.getElementById('u-cadunico').value, Nivel_Acesso: document.getElementById('u-nivel').value, Status: document.getElementById('u-status').value, Foto: document.getElementById('u-foto-b64').value };
             if (editId) { 
                 const idx = database.users.findIndex(u => u.ID_Usuario === editId); 
                 obj.ID_Usuario = editId; 
-                obj.Data_Cadastro = database.users[idx].Data_Cadastro || new Date().toLocaleDateString('pt-BR'); 
+                obj.Data_Cadastro = database.users[idx].Data_Cadastro || dataCravada; 
                 if(!obj.Foto) obj.Foto = database.users[idx].Foto; 
                 database.users[idx] = obj; await cloudSave('saveUser', obj); alert('Atualizado!'); cancelEditUser(); 
             } else { 
                 obj.ID_Usuario = generateID('USR'); 
-                obj.Data_Cadastro = new Date().toLocaleDateString('pt-BR'); 
+                obj.Data_Cadastro = dataCravada; 
                 database.users.push(obj); await cloudSave('saveUser', obj); alert(`Cadastrado! ID: ${obj.ID_Usuario}`); document.getElementById('form-user').reset(); 
             } 
             syncDB(); renderUsersTable(); renderLoansSection();
@@ -1295,6 +1331,98 @@ function applyConfig() {
             } 
             pdf.save(`Etiquetas_${currentBook.ID_Livro}.pdf`); 
             document.getElementById('print-copy-num').value = currCopy; updateEtiquetaBarcode(); 
-        }</script>
+        }
+
+        /* --- SISTEMA DE CÂMERA E CORTE DE FOTO --- */
+        let cropper;
+        let videoStream;
+        let targetInputId = '';
+        let currentAspectRatio = 1;
+
+        function openCameraModal(targetId, ratio) {
+            targetInputId = targetId;
+            currentAspectRatio = ratio || 1;
+            document.getElementById('modal-camera-crop').classList.add('active');
+            document.getElementById('btn-start-camera').style.display = 'inline-flex';
+            document.getElementById('btn-take-photo').style.display = 'none';
+            document.getElementById('btn-confirm-crop').style.display = 'none';
+            document.getElementById('image-to-crop').style.display = 'none';
+            document.getElementById('camera-video').style.display = 'none';
+            if(cropper) { cropper.destroy(); cropper = null; }
+        }
+
+        function closeCameraModal() {
+            if(videoStream) { videoStream.getTracks().forEach(track => track.stop()); }
+            if(cropper) { cropper.destroy(); cropper = null; }
+            document.getElementById('modal-camera-crop').classList.remove('active');
+            document.getElementById('upload-crop-file').value = '';
+        }
+
+        async function startCamera() {
+            const video = document.getElementById('camera-video');
+            document.getElementById('image-to-crop').style.display = 'none';
+            if(cropper) { cropper.destroy(); cropper = null; }
+            
+            try {
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                video.srcObject = videoStream;
+                video.style.display = 'block';
+                document.getElementById('btn-start-camera').style.display = 'none';
+                document.getElementById('btn-take-photo').style.display = 'inline-flex';
+            } catch(err) {
+                alert("Não foi possível acessar a câmera. Verifique as permissões do seu navegador.");
+            }
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('camera-video');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            
+            videoStream.getTracks().forEach(track => track.stop());
+            video.style.display = 'none';
+            
+            initCropper(canvas.toDataURL('image/png'));
+        }
+
+        function loadCropperFromFile(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) { initCropper(e.target.result); }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function initCropper(imageSrc) {
+            const imgElement = document.getElementById('image-to-crop');
+            imgElement.src = imageSrc;
+            imgElement.style.display = 'block';
+            
+            document.getElementById('btn-start-camera').style.display = 'none';
+            document.getElementById('btn-take-photo').style.display = 'none';
+            document.getElementById('btn-confirm-crop').style.display = 'inline-flex';
+
+            if(cropper) { cropper.destroy(); }
+            cropper = new Cropper(imgElement, {
+                aspectRatio: currentAspectRatio,
+                viewMode: 1,
+                autoCropArea: 0.9,
+            });
+        }
+
+        function confirmCrop() {
+            if(!cropper) return;
+            const croppedCanvas = cropper.getCroppedCanvas({ width: 400 }); 
+            const base64Img = croppedCanvas.toDataURL('image/jpeg', 0.8);
+            
+            document.getElementById(targetInputId).value = base64Img;
+            
+            const statusSpan = document.getElementById(targetInputId.replace('-b64', '-status'));
+            if(statusSpan) statusSpan.innerText = "✔️ Imagem anexada e ajustada!";
+            
+            closeCameraModal();
+        }
+        </script>
 </body>
 </html>
