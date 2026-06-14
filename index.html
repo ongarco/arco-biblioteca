@@ -499,7 +499,6 @@
                                 <div id="qrcode-canvas-user" style="width:55px; height:55px;"></div>
                                 <span style="font-size:7px; font-weight:bold; margin-top:2px; color:#333;">SCAN-ME</span>
                             </div>
-                        </div>>
                         </div>
                     <div class="carteirinha-dados">
                             <div class="carteirinha-nome"><strong>LEITOR(A)</strong><span id="card-nome"></span></div>
@@ -1000,11 +999,17 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             
             database.books.forEach(b => {
                 const emprestadosDesteLivro = database.loans.filter(l => l.ID_Livro === b.ID_Livro && l.Status_Emprestimo === 'Ativo').length;
-                const limiteEmp = b.Qtd_Emprestimo || b.Quantidade_Total || 0;
+                
+                // Força a conversão para número para evitar erros matemáticos com dados antigos salvos como texto
+                const qEmp = parseInt(b.Qtd_Emprestimo) || 0;
+                const qTot = parseInt(b.Quantidade_Total) || 0;
+                const qCons = parseInt(b.Qtd_Consulta) || 0;
+                
+                const limiteEmp = qEmp > 0 ? qEmp : qTot;
                 b.Estoque_Atual = Math.max(0, limiteEmp - emprestadosDesteLivro);
                 
-                totFisico += (b.Quantidade_Total || 0);
-                disponiveis += b.Estoque_Atual + (parseInt(b.Qtd_Consulta) || 0); 
+                totFisico += qTot;
+                disponiveis += b.Estoque_Atual + qCons; 
             });
             
             const emprestadosAtuais = database.loans.filter(l => l.Status_Emprestimo === 'Ativo').length;
