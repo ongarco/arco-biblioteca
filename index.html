@@ -69,10 +69,10 @@
         .box-container { background: var(--panel-bg); padding: 20px; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
         .box-container h3 { margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 10px; color: var(--primary); }
 
-        /* Tabelas */
-        .table-responsive { overflow-x: auto; width: 100%; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; background: var(--panel-bg); }
-        table th { background: rgba(0,0,0,0.05); padding: 12px; color: var(--primary); font-weight: 600; }
+       /* Tabelas */
+        .table-responsive { overflow-x: auto; overflow-y: auto; max-height: 450px; width: 100%; margin-top: 15px; border: 1px solid #eee; border-radius: 4px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; background: var(--panel-bg); position: relative; }
+        table th { background: #f8f9fa; padding: 12px; color: var(--primary); font-weight: 600; position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1); }
         table td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
         .row-thumb { width: 35px; height: 45px; object-fit: cover; border-radius: 3px; background: #eee; }
         .row-avatar { width: 35px; height: 35px; object-fit: cover; border-radius: 50%; background: #eee; }
@@ -127,7 +127,7 @@
         .etiqueta-qrcode-container { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid #ddd; padding-left: 8px; }
         
         .carteirinha-wrapper { display: flex; justify-content: center; margin: 15px 0; }
-        .carteirinha { width: 359px; height: 260px; background: transparent; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); text-align: left; }
+        .carteirinha { width: 359px; height: 260px; background: transparent; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); text-align: left; border: 1px solid #ccc; box-sizing: border-box; }
         .carteirinha-moldura { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; pointer-events: none; }
         .carteirinha-conteudo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
         .c-item { position: absolute; font-family: 'Segoe UI', Tahoma, sans-serif; color: #000; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
@@ -153,6 +153,9 @@
             <p style="color:#666; font-size:14px; margin-bottom:20px;">Acesso ao Sistema</p>
             <input type="text" id="login-user" placeholder="Usuário">
             <input type="password" id="login-pass" placeholder="Senha">
+            <div style="text-align:left; margin-top:10px; margin-bottom:10px; font-size:13px; color:#555;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:5px;"><input type="checkbox" id="login-remember"> Manter conectado por 7 dias</label>
+            </div>
             <button class="btn" style="width:100%; margin-top:10px;" onclick="handleLogin()">Entrar</button>
         </div>
     </div>
@@ -248,9 +251,15 @@
                 </form>
             </div>
             <div class="box-container">
-                <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-                    <h3>Base de Leitores</h3>
-                    <input type="text" id="search-user-input" placeholder="Buscar..." onkeyup="renderUsersTable()" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; flex-wrap:wrap; gap:10px; align-items:flex-end;">
+                    <h3 style="margin:0;">Base de Leitores</h3>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <select id="filter-user-genero" onchange="renderUsersTable()" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;"><option value="">Gênero (Todos)</option></select>
+                        <select id="filter-user-orientacao" onchange="renderUsersTable()" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;"><option value="">Orientação (Todas)</option></select>
+                        <select id="filter-user-raca" onchange="renderUsersTable()" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;"><option value="">Raça (Todas)</option></select>
+                        <select id="filter-user-escolaridade" onchange="renderUsersTable()" style="padding:6px; border:1px solid #ccc; border-radius:4px; font-size:12px;"><option value="">Escolaridade (Todas)</option></select>
+                        <input type="text" id="search-user-input" placeholder="Buscar Nome/ID..." onkeyup="renderUsersTable()" style="padding:6px; border:1px solid #ccc; border-radius:4px; min-width:180px;">
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table>
@@ -264,55 +273,7 @@
         <div id="panel-livros" class="panel">
             <h2 class="section-title">Catalogação de Acervo</h2>
             
-            <div class="ai-area">
-                <h4>✨ FAZER COM I.A</h4>
-                <p>Envie uma foto ou use a câmera para ler a Ficha Catalográfica. O preenchimento é automático.</p>
-                <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px; background:#fff; padding:15px; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.05); justify-content:center;">
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px; border-right:1px solid #eee; padding-right:15px;">
-                        <span style="font-size:11px; color:#888;">Opção 1: Arquivo Local</span>
-                        <div style="display:flex; align-items:center; gap:5px;">
-                            <input type="file" id="ai-catalog-file" accept="image/*" style="border:1px solid #ccc; border-radius:4px; padding:4px; width:220px; font-size:12px;">
-                            <button type="button" class="btn" onclick="analyzeCatalogCard()" style="background:#8e44ad; padding:6px 12px;">📁 Analisar</button>
-                        </div>
-                    </div>
-                    <div style="display:flex; flex-direction:column; align-items:center; gap:5px; padding-left:5px;">
-                        <span style="font-size:11px; color:#888;">Opção 2: Câmera Direta</span>
-                        <button type="button" class="btn" onclick="openCameraCapture()" style="background:#2980b9;">📷 Tirar Foto</button>
-                    </div>
-                </div>
-                <div id="ai-status" style="margin-top:10px; font-weight:bold; color:#8e44ad; font-size:13px;"></div>
-            </div>
-
-            <div class="box-container">
-                <h3 id="form-book-title">Inserir Novo Livro</h3>
-                <form id="form-book" onsubmit="saveBook(event)">
-                    <input type="hidden" id="editing-book-id" value="">
-                    <div class="form-grid">
-                        <div class="form-group span-2"><label>Título da Obra *</label><input type="text" id="l-titulo" required></div>
-                        <div class="form-group"><label>Foto da Capa</label><input type="file" id="l-foto" accept="image/*" onchange="processFileToBase64(this, 'l-foto-b64')"><input type="hidden" id="l-foto-b64"></div>
-                        <div class="form-group"><label>Autor *</label><input type="text" id="l-autor" required></div>
-                        <div class="form-group"><label>Editora *</label><input type="text" id="l-editora" required></div>
-                        <div class="form-group"><label>Ano *</label><input type="number" id="l-ano" required></div>
-                        
-                        <div class="form-group">
-                            <label>Categoria / Gênero Literário *</label>
-                            <select id="l-categoria" required><option value="">Selecione uma categoria...</option></select>
-                        </div>
-                        
-                     <div class="form-group"><label>ISBN *</label><input type="text" id="l-isbn" required></div>
-                        <div class="form-group"><label>Status da Obra *</label><select id="l-status-livro" required><option value="Ativo">Ativo</option><option value="Inativo">Inativo (Não Emprestar)</option></select></div>
-                        
-                        <div class="form-group"><label>Qtd. P/ Empréstimo *</label><input type="number" id="l-qtd-emprestimo" min="0" value="1" required></div>
-                        <div class="form-group"><label>Qtd. P/ Consulta Local *</label><input type="number" id="l-qtd-consulta" min="0" value="0" required></div>
-                        <div class="form-group"><label>Qtd. Perdida/Danificada *</label><input type="number" id="l-qtd-perdido" min="0" value="0" required></div>
-                        
-                        <div class="form-group span-3" style="text-align: right; margin-top: 10px;">
-                            <button type="button" class="btn btn-danger" id="btn-cancel-book" style="display:none; margin-right:10px;" onclick="cancelEditBook()">Cancelar</button>
-                            <button type="submit" class="btn btn-pulse" id="btn-submit-book">Catalogar Obra</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
+            
             <div class="box-container">
                 <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
                     <h3>Catálogo</h3>
@@ -481,10 +442,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="form-group span-3" style="border-top:1px solid #ccc; padding-top:15px; margin-top:5px;">
-                        <label>Chave de API (Google Gemini) para leitura automática de livros</label>
-                        <input type="password" id="cfg-gemini-key" placeholder="Cole sua API Key do Google AI Studio aqui">
-                    </div>
+                    
 
                     <div class="form-group span-3" style="text-align:right; border-top:1px solid #ccc; padding-top:15px; margin-top:10px;">
                         <button class="btn btn-primary" onclick="saveConfig()">Salvar Personalização</button>
@@ -527,17 +485,7 @@
         </div>
     </div>
 
-    <div id="modal-camera-capture" class="preview-overlay">
-        <div class="preview-box">
-            <h3>Câmera - Ficha Catalográfica</h3>
-            <video id="camera-video" style="width:100%; max-width:400px; border-radius:8px; background:#000; margin-bottom:15px;" autoplay playsinline></video>
-            <canvas id="camera-canvas" style="display:none;"></canvas>
-            <div class="preview-actions">
-                <button class="btn btn-primary" onclick="takePhotoAndAnalyze()">📸 Tirar Foto e Analisar</button>
-                <button class="btn btn-danger" onclick="closeCameraCapture()">Cancelar</button>
-            </div>
-        </div>
-    </div>
+    
 
     <div id="modal-scanner" class="preview-overlay"><div class="preview-box"><h3>Câmera Leitora</h3><div id="reader"></div><div class="preview-actions"><button class="btn btn-danger" onclick="closeScannerModal()">Fechar Câmera</button></div></div></div>
     
@@ -638,6 +586,14 @@
             loadConfigAndApply(); populateDynamicDropdowns(); renderCustomOptionsList(); renderSysUsersList();
             updateDashboardCounters(); renderUsersTable(); renderBooksTable(); renderLoansSection(); renderFluxoDiarioTable(); setDefaultLoanDate();
             
+            // MANTER CONECTADO (Lógica)
+            const savedSession = JSON.parse(localStorage.getItem('arco_login_session'));
+            if(savedSession && new Date().getTime() < savedSession.expires) {
+                loggedInOperator = savedSession.user;
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('user-logged-info').innerHTML = `<strong>${loggedInOperator}</strong>`;
+            }
+
             // INTEGRAÇÃO NUVEM
             document.getElementById('cloud-loader').style.display = 'flex';
          try {
@@ -665,9 +621,18 @@
         function handleLogin() { 
             const u = document.getElementById('login-user').value; const p = document.getElementById('login-pass').value;
             const found = database.sysAccess.find(acc => acc.user === u && acc.pass === p);
-            if(found) { loggedInOperator = found.user; document.getElementById('login-screen').style.display = 'none'; document.getElementById('user-logged-info').innerHTML = `<strong>${found.user}</strong>`; document.getElementById('login-pass').value = ''; renderLoansSection(); } else { alert("Usuário ou senha incorretos."); }
+            if(found) { 
+                loggedInOperator = found.user; 
+                document.getElementById('login-screen').style.display = 'none'; 
+                document.getElementById('user-logged-info').innerHTML = `<strong>${found.user}</strong>`; 
+                document.getElementById('login-pass').value = ''; 
+                if(document.getElementById('login-remember').checked) {
+                    localStorage.setItem('arco_login_session', JSON.stringify({ user: found.user, expires: new Date().getTime() + (7 * 24 * 60 * 60 * 1000) }));
+                }
+                renderLoansSection(); 
+            } else { alert("Usuário ou senha incorretos."); }
         }
-        function handleLogout() { document.getElementById('login-screen').style.display = 'flex'; loggedInOperator = ''; }
+        function handleLogout() { localStorage.removeItem('arco_login_session'); document.getElementById('login-screen').style.display = 'flex'; loggedInOperator = ''; }
         function switchTab(t) { document.querySelectorAll('.panel, nav button').forEach(e => e.classList.remove('active')); document.getElementById(`panel-${t}`).classList.add('active'); document.getElementById(`nav-${t}`).classList.add('active'); }
         function processFileToBase64(el, targetId, callback) { const file = el.files[0]; if (file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById(targetId).value = e.target.result; if(callback) callback(); }; reader.readAsDataURL(file); } }
 
@@ -697,57 +662,18 @@
         }
         async function removeSysUser(idx) { if(confirm("Remover acesso?")) { const utd = database.sysAccess[idx].user; await cloudSave('deleteSysAccess', {user: utd}); database.sysAccess.splice(idx, 1); syncDB(); renderSysUsersList(); } }
 
-        function populateDynamicDropdowns() { const maps = [{ id: 'u-genero', key: 'genero' }, { id: 'u-orientacao', key: 'orientacao' }, { id: 'u-raca', key: 'raca' }, { id: 'u-escolaridade', key: 'escolaridade' }, { id: 'l-categoria', key: 'categoria' }]; maps.forEach(m => { const select = document.getElementById(m.id); if(!select) return; select.innerHTML = '<option value="">Selecione...</option>'; database.customOptions[m.key].forEach(val => { const opt = document.createElement('option'); opt.value = val; opt.innerText = val; select.appendChild(opt); }); }); }
+        function populateDynamicDropdowns() { 
+            const maps = [{ id: 'u-genero', key: 'genero', filter: 'filter-user-genero', fText: 'Gênero' }, { id: 'u-orientacao', key: 'orientacao', filter: 'filter-user-orientacao', fText: 'Orientação' }, { id: 'u-raca', key: 'raca', filter: 'filter-user-raca', fText: 'Raça' }, { id: 'u-escolaridade', key: 'escolaridade', filter: 'filter-user-escolaridade', fText: 'Escolaridade' }, { id: 'l-categoria', key: 'categoria' }]; 
+            maps.forEach(m => { 
+                const select = document.getElementById(m.id); 
+                if(select) { select.innerHTML = '<option value="">Selecione...</option>'; database.customOptions[m.key].forEach(val => { const opt = document.createElement('option'); opt.value = val; opt.innerText = val; select.appendChild(opt); }); }
+                if(m.filter) { const fSelect = document.getElementById(m.filter); if(fSelect) { fSelect.innerHTML = `<option value="">${m.fText} (Todos)</option>`; database.customOptions[m.key].forEach(val => { const opt = document.createElement('option'); opt.value = val; opt.innerText = val; fSelect.appendChild(opt); }); } }
+            }); 
+        }
         function addCustomOption() { const field = document.getElementById('new-opt-field').value; const val = document.getElementById('new-opt-val').value.trim(); if(!val) return alert("Digite o nome da opção!"); if(!database.customOptions[field].includes(val)) { database.customOptions[field].push(val); syncDB(); populateDynamicDropdowns(); document.getElementById('view-opt-field').value = field; renderCustomOptionsList(); document.getElementById('new-opt-val').value = ''; } else { alert('Essa opção já existe!'); } }
         function removeCustomOption(field, idx) { if(confirm("Atenção: Tem certeza que deseja apagar esta opção do sistema?")) { database.customOptions[field].splice(idx, 1); syncDB(); populateDynamicDropdowns(); renderCustomOptionsList(); } }
         function renderCustomOptionsList() { const field = document.getElementById('view-opt-field').value; const listDiv = document.getElementById('custom-opt-list'); listDiv.innerHTML = ''; if(database.customOptions[field].length === 0) { listDiv.innerHTML = '<span style="color:#999; font-style:italic;">Lista completamente vazia.</span>'; return; } database.customOptions[field].forEach((val, idx) => { listDiv.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 5px; border-bottom:1px solid #ddd;"><span style="font-weight:bold;">${val}</span><button type="button" class="btn btn-sm btn-danger" style="padding:2px 8px; font-size:10px;" onclick="removeCustomOption('${field}', ${idx})">Excluir</button></div>`; }); }
 
-        // --- CAMERA E AI GEMINI ---
-        let cameraCaptureStream = null;
-        async function openCameraCapture() { document.getElementById('modal-camera-capture').classList.add('active'); try { cameraCaptureStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } }); document.getElementById('camera-video').srcObject = cameraCaptureStream; } catch (err) { alert("Erro ao acessar a câmera."); closeCameraCapture(); } }
-        function closeCameraCapture() { if (cameraCaptureStream) { cameraCaptureStream.getTracks().forEach(track => track.stop()); cameraCaptureStream = null; } document.getElementById('modal-camera-capture').classList.remove('active'); }
-        function takePhotoAndAnalyze() { const video = document.getElementById('camera-video'); const canvas = document.getElementById('camera-canvas'); canvas.width = video.videoWidth; canvas.height = video.videoHeight; canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height); const base64Str = canvas.toDataURL('image/jpeg'); closeCameraCapture(); processGeminiAnalysis(base64Str.split(',')[1], 'image/jpeg'); }
-
-        async function fileToBase64Promise(file) { return new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res(r.result); r.onerror = e => rej(e); }); }
-        async function analyzeCatalogCard() { const fileInput = document.getElementById('ai-catalog-file'); if(!fileInput.files[0]) return alert("Selecione a foto."); const base64Str = await fileToBase64Promise(fileInput.files[0]); processGeminiAnalysis(base64Str.split(',')[1], fileInput.files[0].type); }
-        
-async function processGeminiAnalysis(base64Data, mimeType) {
-            const apiKey = database.config.geminiKey; 
-            if(!apiKey) { alert("Configure a API Key do Gemini nas Configurações."); switchTab('config'); return; }
-            
-            const status = document.getElementById('ai-status'); 
-            status.innerText = "Conectando ao Google AI... Aguarde..."; 
-            status.style.color = "#f39c12";
-            
-            try {
-                const prompt = `Extraia os dados desta ficha catalográfica. Retorne APENAS um objeto JSON limpo: {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`;
-                const bodyPayload = { contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }] };
-
-                const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyPayload) 
-                });
-                
-                const result = await res.json(); 
-                if(result.error) throw new Error(result.error.message);
-                if(!result.candidates) throw new Error("A IA não conseguiu ler a imagem. Tente uma foto mais clara.");
-                
-                let txt = result.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim(); 
-                let data = JSON.parse(txt);
-                
-                document.getElementById('l-titulo').value = data.titulo || ''; 
-                document.getElementById('l-autor').value = data.autor || ''; 
-                document.getElementById('l-editora').value = data.editora || ''; 
-                document.getElementById('l-ano').value = data.ano ? data.ano.toString().replace(/\D/g, '') : ''; 
-                document.getElementById('l-isbn').value = data.isbn || '';
-                if(data.categoria) { 
-                    const catSelect = document.getElementById('l-categoria'); 
-                    if(!Array.from(catSelect.options).some(o => o.value === data.categoria)) { database.customOptions.categoria.push(data.categoria); syncDB(); populateDynamicDropdowns(); } 
-                    catSelect.value = data.categoria; 
-                }
-                status.innerText = "✨ Dados extraídos!"; status.style.color = "#18BC9C";
-                const btn = document.getElementById('btn-submit-book'); btn.innerText = "CONFIRMAR E INCLUIR NOVO LIVRO?"; btn.classList.add('active');
-            } catch(e) { status.innerText = "Erro: " + e.message; status.style.color = "#e74c3c"; }
-        }
         function buscarCEP(cep) { let cepLimpo = cep.replace(/\D/g, ''); if (cepLimpo.length === 8) { document.getElementById('cep-feedback').innerText = "Buscando..."; document.getElementById('cep-feedback').style.color = "#f39c12"; fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(res => res.json()).then(data => { if (!data.erro) { document.getElementById('u-rua').value = data.logradouro; document.getElementById('u-bairro').value = data.bairro; document.getElementById('u-cidade').value = data.localidade; document.getElementById('u-estado').value = data.uf; document.getElementById('cep-feedback').innerText = "Encontrado!"; document.getElementById('cep-feedback').style.color = "#18BC9C"; } else { document.getElementById('cep-feedback').innerText = "Não localizado."; document.getElementById('cep-feedback').style.color = "#e74c3c"; } }).catch(err => { document.getElementById('cep-feedback').innerText = "Erro."; document.getElementById('cep-feedback').style.color = "#e74c3c"; }); } }
 
 function applyConfig() {
@@ -907,7 +833,30 @@ function applyConfig() {
         }
         function editUser(id) { const u = database.users.find(x => x.ID_Usuario === id); if(!u) return; document.getElementById('editing-user-id').value = id; document.getElementById('form-user-title').innerText = "Editar Usuário Existente"; document.getElementById('btn-submit-user').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-user').classList.add('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'inline-block'; document.getElementById('u-nome').value = u.Nome_Completo; document.getElementById('u-email').value = u.Email; document.getElementById('u-whatsapp').value = u.Telefone_WhatsApp; document.getElementById('u-cep').value = u.Endereco_CEP; document.getElementById('u-rua').value = u.Endereco_Rua; document.getElementById('u-numero').value = u.Endereco_Numero; document.getElementById('u-bairro').value = u.Endereco_Bairro; document.getElementById('u-cidade').value = u.Endereco_Cidade; document.getElementById('u-estado').value = u.Endereco_Estado; const setD = (eid, v) => { const el = document.getElementById(eid); if(v && !Array.from(el.options).some(o=>o.value===v)){ const opt=document.createElement('option'); opt.value=v; opt.innerText=v; el.appendChild(opt);} el.value = v; }; setD('u-genero', u.Identidade_Genero); setD('u-orientacao', u.Orientacao_Sexual); setD('u-raca', u.Raca_Etnia); setD('u-escolaridade', u.Escolaridade); document.getElementById('u-cadunico').value = u.Programas_Governo_CADUnico; document.getElementById('u-nivel').value = u.Nivel_Acesso; document.getElementById('u-status').value = u.Status; window.scrollTo(0,0); }
         function cancelEditUser() { document.getElementById('editing-user-id').value = ''; document.getElementById('form-user-title').innerText = "Cadastrar Novo Usuário"; document.getElementById('btn-submit-user').innerText = "Cadastrar Usuário"; document.getElementById('btn-submit-user').classList.remove('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'none'; document.getElementById('form-user').reset(); }
-        function renderUsersTable() { const t = document.getElementById('table-users-body'); const s = document.getElementById('search-user-input').value.toLowerCase(); t.innerHTML = ''; database.users.filter(u => u.Nome_Completo.toLowerCase().includes(s) || u.ID_Usuario.toLowerCase().includes(s)).forEach(u => { const img = u.Foto ? `<img class="row-avatar" src="${u.Foto}">` : `<div class="row-avatar" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${u.ID_Usuario}</td><td><strong>${u.Nome_Completo}</strong></td><td>${u.Telefone_WhatsApp}</td><td><span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span></td><td style="text-align:center; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;"><button class="btn btn-sm" style="background:#3498db;" onclick="openUserProfile('${u.ID_Usuario}')">👤 Perfil</button> <button class="btn btn-sm" onclick="openCarteirinhaModal('${u.ID_Usuario}')">🪪 Cartão</button> <button class="btn btn-sm btn-edit" onclick="editUser('${u.ID_Usuario}')">✏️ Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.ID_Usuario}')">🗑️ Excluir</button></td></tr>`; }); }
+        function renderUsersTable() { 
+            const t = document.getElementById('table-users-body'); 
+            const s = document.getElementById('search-user-input') ? document.getElementById('search-user-input').value.toLowerCase() : ''; 
+            const fGen = document.getElementById('filter-user-genero') ? document.getElementById('filter-user-genero').value : '';
+            const fOri = document.getElementById('filter-user-orientacao') ? document.getElementById('filter-user-orientacao').value : '';
+            const fRac = document.getElementById('filter-user-raca') ? document.getElementById('filter-user-raca').value : '';
+            const fEsc = document.getElementById('filter-user-escolaridade') ? document.getElementById('filter-user-escolaridade').value : '';
+            
+            t.innerHTML = ''; 
+            
+            let filteredUsers = database.users.filter(u => {
+                const matchSearch = u.Nome_Completo.toLowerCase().includes(s) || u.ID_Usuario.toLowerCase().includes(s);
+                const matchGen = !fGen || u.Identidade_Genero === fGen;
+                const matchOri = !fOri || u.Orientacao_Sexual === fOri;
+                const matchRac = !fRac || u.Raca_Etnia === fRac;
+                const matchEsc = !fEsc || u.Escolaridade === fEsc;
+                return matchSearch && matchGen && matchOri && matchRac && matchEsc;
+            });
+
+            filteredUsers.forEach(u => { 
+                const img = u.Foto ? `<img class="row-avatar" src="${u.Foto}">` : `<div class="row-avatar" style="background:#ccc;"></div>`; 
+                t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${u.ID_Usuario}</td><td><strong>${u.Nome_Completo}</strong></td><td>${u.Telefone_WhatsApp}</td><td><span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span></td><td style="text-align:center; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;"><button class="btn btn-sm" style="background:#3498db;" onclick="openUserProfile('${u.ID_Usuario}')">👤 Perfil</button> <button class="btn btn-sm" onclick="openCarteirinhaModal('${u.ID_Usuario}')">🪪 Cartão</button> <button class="btn btn-sm btn-edit" onclick="editUser('${u.ID_Usuario}')">✏️ Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.ID_Usuario}')">🗑️ Excluir</button></td></tr>`; 
+            }); 
+        }
         
         async function deleteUser(id) { if(confirm("CUIDADO: Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este leitor?")) { const idx = database.users.findIndex(u => u.ID_Usuario === id); if(idx !== -1) { database.users.splice(idx, 1); await cloudSave('deleteUser', { ID_Usuario: id }); syncDB(); renderUsersTable(); updateDashboardCounters(); alert("Leitor excluído com sucesso!"); } } }
 
