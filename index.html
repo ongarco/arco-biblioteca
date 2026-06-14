@@ -12,8 +12,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode"></script>
-    
+<script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>    
     <style>
         /* Variáveis de estilo Customizáveis */
         :root { --primary: #2C3E50; --secondary: #18BC9C; --bg: #F4F6F9; --text: #333333; --header-text: #ffffff; --panel-bg: #ffffff; }
@@ -127,18 +127,17 @@
         .etiqueta-qrcode-container { display: flex; flex-direction: column; align-items: center; justify-content: center; border-left: 1px solid #ddd; padding-left: 8px; }
         
         .carteirinha-wrapper { display: flex; justify-content: center; margin: 15px 0; }
-        .carteirinha { width: 378px; height: 260px; background: #e2e8f0; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); text-align: left; }
-        .carteirinha-moldura { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; pointer-events: none; }
-        .carteirinha-conteudo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; padding: 20px; display: flex; gap: 15px; align-items: center; }
-        .carteirinha-col-esq { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100px; }
-       .carteirinha-foto { width: 90px; height: 90px; background-color: #fff; background-size: cover; background-position: center; border: 3px solid var(--primary); border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transform: translate(var(--c-foto-x, 0px), var(--c-foto-y, 0px)); }
-        .carteirinha-dados { display: flex; flex-direction: column; gap: 6px; flex-grow: 1; height: 100%; justify-content: center; transform: translate(var(--c-dados-x, 0px), var(--c-dados-y, 0px)); }
-        .carteirinha-campo { background: rgba(255,255,255,0.8); color: #000000; padding: 5px 8px; border-radius: 6px; font-size: 11px; font-weight: 500; border: 1px solid #ddd; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .carteirinha-campo strong { color: var(--primary); font-size: 9px; text-transform: uppercase; margin-right: 4px; }
-        .carteirinha-nome { font-size: 14px; font-weight: bold; background: #fff; border-left: 4px solid var(--secondary); padding-left: 8px; border-radius: 4px; border: 1px solid #ccc; padding: 6px;}
-        .carteirinha-nome strong { display: block; font-size: 8px; margin-bottom: 2px; }
-        .carteirinha-qr-area { background: #fff; padding: 5px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transform: translate(var(--c-qr-x, 0px), var(--c-qr-y, 0px)); }
-        .carteirinha-logos { display: flex; gap: 10px; margin-top: 5px; align-items: center; justify-content: flex-end; transform: translate(var(--c-logos-x, 0px), var(--c-logos-y, 0px)); }
+        .carteirinha { width: 359px; height: 260px; background: transparent; border-radius: 12px; position: relative; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.15); text-align: left; }
+        .carteirinha-moldura { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; pointer-events: none; }
+        .carteirinha-conteudo { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+        .c-item { position: absolute; font-family: 'Segoe UI', Tahoma, sans-serif; color: #000; font-size: 13px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+        .c-foto { position: absolute; width: 85px; height: 105px; background-color: #eee; background-size: cover; background-position: center; border-radius: 4px; left: var(--p-foto-x, 20px); top: var(--p-foto-y, 80px); z-index: 3;}
+        .c-nome { left: var(--p-nome-x, 130px); top: var(--p-nome-y, 80px); font-size: 15px; }
+        .c-id { left: var(--p-id-x, 130px); top: var(--p-id-y, 110px); font-family: monospace; }
+        .c-tel { left: var(--p-tel-x, 130px); top: var(--p-tel-y, 140px); }
+        .c-mail { left: var(--p-mail-x, 130px); top: var(--p-mail-y, 170px); font-size: 11px; }
+        .c-barcode-container { position: absolute; left: var(--p-bar-x, 130px); top: var(--p-bar-y, 200px); background: #fff; padding: 2px 4px; border-radius: 4px; display: inline-block; }
+        .c-barcode-container canvas { display: block; max-height: 35px; }
         
         .comprovante { border: 2px solid var(--primary); padding: 20px; border-radius: 8px; text-align: left; background: #fff; color: #000; font-size: 14px; }
         .comprovante h3 { text-align: center; border-bottom: 1px solid #ccc; padding-bottom: 10px; margin-top: 0; }
@@ -413,21 +412,22 @@
                         </select>
                     </div>
                    <div class="form-group span-3">
-                        <label>Moldura da Carteirinha (Obrigatório: 10cm x 6.9cm / PNG Transparente)</label>
+                        <label>Moldura da Carteirinha (Obrigatório: 9,5cm x 6.9cm / PNG Transparente)</label>
                         <input type="file" accept="image/*" onchange="processFileToBase64(this, 'cfg-moldura')">
                         <input type="hidden" id="cfg-moldura">
                     </div>
                     
-                    <div class="form-group span-3" style="border-top:1px solid #ccc; padding-top:15px; margin-top:5px;">
-                        <h4 style="margin:0 0 15px 0; color:var(--primary);">Ajuste Fino da Carteirinha (Posicione os elementos com números ex: 10, -5, 20...)</h4>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:15px; background:rgba(0,0,0,0.02); padding:15px; border-radius:8px;">
-                            <div><label style="font-size:11px;">↕️ Foto (Esquerda/Direita e Cima/Baixo)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-off-foto-x" placeholder="X (Lados)" onchange="applyConfig()"><input type="number" id="cfg-off-foto-y" placeholder="Y (Altura)" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">↕️ Dados/Textos</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-off-dados-x" placeholder="X (Lados)" onchange="applyConfig()"><input type="number" id="cfg-off-dados-y" placeholder="Y (Altura)" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">↕️ QR Code</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-off-qr-x" placeholder="X (Lados)" onchange="applyConfig()"><input type="number" id="cfg-off-qr-y" placeholder="Y (Altura)" onchange="applyConfig()"></div></div>
-                            <div><label style="font-size:11px;">↕️ Logos (Arco / Biblio)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-off-logos-x" placeholder="X (Lados)" onchange="applyConfig()"><input type="number" id="cfg-off-logos-y" placeholder="Y (Altura)" onchange="applyConfig()"></div></div>
+                   <div class="form-group span-3" style="border-top:1px solid #ccc; padding-top:15px; margin-top:5px;">
+                        <h4 style="margin:0 0 15px 0; color:var(--primary);">Posicionamento Livre da Carteirinha (Posição Esquerda=X, Topo=Y)</h4>
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:15px; background:rgba(0,0,0,0.02); padding:15px; border-radius:8px;">
+                            <div><label style="font-size:11px;">📷 Foto (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-foto-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-foto-y" placeholder="Topo" onchange="applyConfig()"></div></div>
+                            <div><label style="font-size:11px;">👤 Nome (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-nome-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-nome-y" placeholder="Topo" onchange="applyConfig()"></div></div>
+                            <div><label style="font-size:11px;">🆔 ID (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-id-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-id-y" placeholder="Topo" onchange="applyConfig()"></div></div>
+                            <div><label style="font-size:11px;">📱 Telefone (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-tel-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-tel-y" placeholder="Topo" onchange="applyConfig()"></div></div>
+                            <div><label style="font-size:11px;">✉️ E-mail (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-mail-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-mail-y" placeholder="Topo" onchange="applyConfig()"></div></div>
+                            <div><label style="font-size:11px;">📶 Código de Barras (X, Y)</label><div style="display:flex; gap:5px;"><input type="number" id="cfg-p-bar-x" placeholder="Esq." onchange="applyConfig()"><input type="number" id="cfg-p-bar-y" placeholder="Topo" onchange="applyConfig()"></div></div>
                         </div>
                     </div>
-
                     <div class="form-group span-3" style="border-top:1px solid #ccc; padding-top:15px; margin-top:5px;">
                         <label>Chave de API (Google Gemini) para leitura automática de livros</label>
                         <input type="password" id="cfg-gemini-key" placeholder="Cole sua API Key do Google AI Studio aqui">
@@ -492,26 +492,19 @@
     
     <div id="modal-etiqueta" class="preview-overlay"><div class="preview-box"><h3>Geração de Etiquetas Inteligentes</h3><div style="background:rgba(0,0,0,0.05); padding:10px; border-radius:4px; margin-bottom:15px; display:inline-flex; align-items:center; gap:10px;"><label style="font-weight:bold; font-size:13px;">Exemplar Nº:</label><input type="number" id="print-copy-num" value="1" min="1" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;" onchange="updateEtiquetaQR()"><span id="print-copy-total" style="font-size:13px;"> de X</span></div><div class="etiqueta-livro-wrapper"><div class="etiqueta-livro" id="print-etiqueta-target"><div class="etiqueta-info"><div><div class="etiqueta-header">Marca Arco / Biblioteca</div><div class="etiqueta-title" id="lbl-titulo">Título</div><div style="font-size:10px; color:#333; margin-top:2px;"><strong>Autor:</strong> <span id="lbl-autor"></span><br><strong>Editora:</strong> <span id="lbl-editora"></span> | <span id="lbl-ano"></span><br><strong>ISBN:</strong> <span id="lbl-isbn"></span></div></div><div class="etiqueta-id" id="lbl-id">ID</div></div><div class="etiqueta-qrcode-container"><div id="qrcode-canvas-book" style="width:100px; height:100px;"></div><div id="lbl-exemplar-id" style="font-size:9px; font-weight:bold; margin-top:4px;">Exemplar 1</div></div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-etiqueta-target', 'Etiqueta_Individual')">Baixar ESTA Etiqueta</button><button class="btn btn-sm" style="background:#8e44ad; color:#fff;" onclick="exportAllLabelsPDF()">Baixar TODAS (Lote)</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-etiqueta')">Fechar</button></div></div></div>
     
-    <div id="modal-carteirinha" class="preview-overlay"><div class="preview-box"><h3>Carteirinha Digital do Leitor</h3><div class="carteirinha-wrapper"><div class="carteirinha" id="print-carteirinha-target"><img id="card-overlay-img" class="carteirinha-moldura" style="display:none;"><div class="carteirinha-conteudo">
-                        <div class="carteirinha-col-esq">
-                            <div id="card-foto" class="carteirinha-foto"></div>
-                            <div id="card-qr-container" class="carteirinha-qr-area">
-                                <div id="qrcode-canvas-user" style="width:55px; height:55px;"></div>
-                        <span style="font-size:7px; font-weight:bold; margin-top:2px; color:#333;">SCAN-ME</span>
-                    </div>
-                </div>
-            <div class="carteirinha-dados">
-                            <div class="carteirinha-nome"><strong>LEITOR(A)</strong><span id="card-nome"></span></div>
-                            <div class="carteirinha-campo"><strong>ID:</strong> <span id="card-id" style="font-family:monospace; font-weight:bold;"></span></div>
-                            <div class="carteirinha-campo"><strong>FONE:</strong> <span id="card-whatsapp"></span></div>
-                            <div class="carteirinha-campo"><strong>MAIL:</strong> <span id="card-email"></span></div>
-                            <div class="carteirinha-logos">
-                                <img id="card-logo-arco" style="width: 40px; height: 40px; display: none;">
-                                <img id="card-logo-biblio" style="width: 25px; height: 40px; display: none;">
-                            </div>
-                        </div>
-                    </div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportCarteirinhaPDF()">🪪 Salvar Carteirinha 10x6.9cm</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-carteirinha')">Fechar</button></div></div></div>
-
+    <div id="modal-carteirinha" class="preview-overlay"><div class="preview-box"><h3>Carteirinha Digital do Leitor</h3><div class="carteirinha-wrapper"><div class="carteirinha" id="print-carteirinha-target">
+        <img id="card-overlay-img" class="carteirinha-moldura" style="display:none;">
+        <div class="carteirinha-conteudo">
+            <div id="card-foto" class="c-foto"></div>
+            <div id="card-nome" class="c-item c-nome"></div>
+            <div id="card-id" class="c-item c-id"></div>
+            <div id="card-whatsapp" class="c-item c-tel"></div>
+            <div id="card-email" class="c-item c-mail"></div>
+            <div id="card-qr-container" class="c-barcode-container">
+                <canvas id="barcode-canvas"></canvas>
+            </div>
+        </div>
+    </div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportCarteirinhaPDF()">🪪 Salvar Carteirinha 9,5x6.9cm</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-carteirinha')">Fechar</button></div></div></div>
     <div id="modal-perfil-livro" class="preview-overlay">
         <div class="preview-box" style="max-width: 800px;">
             <h3 style="color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 10px;">Ficha da Obra</h3>
@@ -699,7 +692,7 @@ async function processGeminiAnalysis(base64Data, mimeType) {
         }
         function buscarCEP(cep) { let cepLimpo = cep.replace(/\D/g, ''); if (cepLimpo.length === 8) { document.getElementById('cep-feedback').innerText = "Buscando..."; document.getElementById('cep-feedback').style.color = "#f39c12"; fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(res => res.json()).then(data => { if (!data.erro) { document.getElementById('u-rua').value = data.logradouro; document.getElementById('u-bairro').value = data.bairro; document.getElementById('u-cidade').value = data.localidade; document.getElementById('u-estado').value = data.uf; document.getElementById('cep-feedback').innerText = "Encontrado!"; document.getElementById('cep-feedback').style.color = "#18BC9C"; } else { document.getElementById('cep-feedback').innerText = "Não localizado."; document.getElementById('cep-feedback').style.color = "#e74c3c"; } }).catch(err => { document.getElementById('cep-feedback').innerText = "Erro."; document.getElementById('cep-feedback').style.color = "#e74c3c"; }); } }
 
-     function applyConfig() {
+function applyConfig() {
             const r = document.documentElement.style; 
             const getVal = id => document.getElementById(id) ? document.getElementById(id).value : '';
             
@@ -711,10 +704,12 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             r.setProperty('--header-text', getVal('cfg-c-htext') || '#ffffff');
             
             const px = (val) => val ? val + 'px' : '0px';
-            r.setProperty('--c-foto-x', px(getVal('cfg-off-foto-x'))); r.setProperty('--c-foto-y', px(getVal('cfg-off-foto-y')));
-            r.setProperty('--c-dados-x', px(getVal('cfg-off-dados-x'))); r.setProperty('--c-dados-y', px(getVal('cfg-off-dados-y')));
-            r.setProperty('--c-qr-x', px(getVal('cfg-off-qr-x'))); r.setProperty('--c-qr-y', px(getVal('cfg-off-qr-y')));
-            r.setProperty('--c-logos-x', px(getVal('cfg-off-logos-x'))); r.setProperty('--c-logos-y', px(getVal('cfg-off-logos-y')));
+            r.setProperty('--p-foto-x', px(getVal('cfg-p-foto-x'))); r.setProperty('--p-foto-y', px(getVal('cfg-p-foto-y')));
+            r.setProperty('--p-nome-x', px(getVal('cfg-p-nome-x'))); r.setProperty('--p-nome-y', px(getVal('cfg-p-nome-y')));
+            r.setProperty('--p-id-x', px(getVal('cfg-p-id-x'))); r.setProperty('--p-id-y', px(getVal('cfg-p-id-y')));
+            r.setProperty('--p-tel-x', px(getVal('cfg-p-tel-x'))); r.setProperty('--p-tel-y', px(getVal('cfg-p-tel-y')));
+            r.setProperty('--p-mail-x', px(getVal('cfg-p-mail-x'))); r.setProperty('--p-mail-y', px(getVal('cfg-p-mail-y')));
+            r.setProperty('--p-bar-x', px(getVal('cfg-p-bar-x'))); r.setProperty('--p-bar-y', px(getVal('cfg-p-bar-y')));
             
             const titleEl = document.getElementById('system-title-display');
             if(titleEl) titleEl.innerText = getVal('cfg-title');
@@ -763,10 +758,12 @@ async function processGeminiAnalysis(base64Data, mimeType) {
             setVal('cfg-show-qr', c.showQRCarteirinha !== false ? "true" : "false"); 
             setVal('cfg-bg-login-desk', c.bgLoginDesk || ''); setVal('cfg-bg-login-mob', c.bgLoginMob || ''); 
             
-            setVal('cfg-off-foto-x', c.offFotoX || ''); setVal('cfg-off-foto-y', c.offFotoY || '');
-            setVal('cfg-off-dados-x', c.offDadosX || ''); setVal('cfg-off-dados-y', c.offDadosY || '');
-            setVal('cfg-off-qr-x', c.offQrX || ''); setVal('cfg-off-qr-y', c.offQrY || '');
-            setVal('cfg-off-logos-x', c.offLogosX || ''); setVal('cfg-off-logos-y', c.offLogosY || '');
+            setVal('cfg-p-foto-x', c.pFotoX || ''); setVal('cfg-p-foto-y', c.pFotoY || '');
+            setVal('cfg-p-nome-x', c.pNomeX || ''); setVal('cfg-p-nome-y', c.pNomeY || '');
+            setVal('cfg-p-id-x', c.pIdX || ''); setVal('cfg-p-id-y', c.pIdY || '');
+            setVal('cfg-p-tel-x', c.pTelX || ''); setVal('cfg-p-tel-y', c.pTelY || '');
+            setVal('cfg-p-mail-x', c.pMailX || ''); setVal('cfg-p-mail-y', c.pMailY || '');
+            setVal('cfg-p-bar-x', c.pBarX || ''); setVal('cfg-p-bar-y', c.pBarY || '');
             
             applyConfig();
         }
@@ -785,16 +782,17 @@ async function processGeminiAnalysis(base64Data, mimeType) {
                 logoArco: getVal('cfg-logo-arco'), logoBiblio: getVal('cfg-logo-biblio'), 
                 showQRCarteirinha: getVal('cfg-show-qr') === "true", 
                 bgLoginDesk: getVal('cfg-bg-login-desk'), bgLoginMob: getVal('cfg-bg-login-mob'),
-                offFotoX: getVal('cfg-off-foto-x'), offFotoY: getVal('cfg-off-foto-y'),
-                offDadosX: getVal('cfg-off-dados-x'), offDadosY: getVal('cfg-off-dados-y'),
-                offQrX: getVal('cfg-off-qr-x'), offQrY: getVal('cfg-off-qr-y'),
-                offLogosX: getVal('cfg-off-logos-x'), offLogosY: getVal('cfg-off-logos-y')
+                pFotoX: getVal('cfg-p-foto-x'), pFotoY: getVal('cfg-p-foto-y'),
+                pNomeX: getVal('cfg-p-nome-x'), pNomeY: getVal('cfg-p-nome-y'),
+                pIdX: getVal('cfg-p-id-x'), pIdY: getVal('cfg-p-id-y'),
+                pTelX: getVal('cfg-p-tel-x'), pTelY: getVal('cfg-p-tel-y'),
+                pMailX: getVal('cfg-p-mail-x'), pMailY: getVal('cfg-p-mail-y'),
+                pBarX: getVal('cfg-p-bar-x'), pBarY: getVal('cfg-p-bar-y')
             }; 
             syncDB(); 
             await cloudSave('saveConfig', database.config);
             alert('Identidade Visual Salva na Nuvem com Sucesso!'); 
         }
-
         async function saveUser(e) {
             e.preventDefault(); const editId = document.getElementById('editing-user-id').value;
             let obj = { Nome_Completo: document.getElementById('u-nome').value, Email: document.getElementById('u-email').value, Telefone_WhatsApp: document.getElementById('u-whatsapp').value, Endereco_CEP: document.getElementById('u-cep').value, Endereco_Rua: document.getElementById('u-rua').value, Endereco_Numero: document.getElementById('u-numero').value, Endereco_Bairro: document.getElementById('u-bairro').value, Endereco_Cidade: document.getElementById('u-cidade').value, Endereco_Estado: document.getElementById('u-estado').value, Identidade_Genero: document.getElementById('u-genero').value, Orientacao_Sexual: document.getElementById('u-orientacao').value, Raca_Etnia: document.getElementById('u-raca').value, Escolaridade: document.getElementById('u-escolaridade').value, Programas_Governo_CADUnico: document.getElementById('u-cadunico').value, Nivel_Acesso: document.getElementById('u-nivel').value, Status: document.getElementById('u-status').value, Foto: document.getElementById('u-foto-b64').value };
@@ -1025,15 +1023,40 @@ async function processGeminiAnalysis(base64Data, mimeType) {
         let currentBook = null;
         function openEtiquetaModal(id) { currentBook = database.books.find(x => x.ID_Livro === id); if(!currentBook) return; document.getElementById('lbl-titulo').innerText = currentBook.Titulo; document.getElementById('lbl-autor').innerText = currentBook.Autor; document.getElementById('lbl-editora').innerText = currentBook.Editora; document.getElementById('lbl-ano').innerText = currentBook.Ano; document.getElementById('lbl-isbn').innerText = currentBook.ISBN; document.getElementById('lbl-id').innerText = currentBook.ID_Livro; const cin = document.getElementById('print-copy-num'); cin.max = currentBook.Quantidade_Total; cin.value = 1; document.getElementById('print-copy-total').innerText = ` de ${currentBook.Quantidade_Total}`; updateEtiquetaQR(); document.getElementById('modal-etiqueta').classList.add('active'); }
         function updateEtiquetaQR() { if(!currentBook) return; const n = document.getElementById('print-copy-num').value; document.getElementById('lbl-exemplar-id').innerText = `Exemplar ${n}`; const qrTarget = document.getElementById('qrcode-canvas-book'); qrTarget.innerHTML = ''; new QRCode(qrTarget, { text: `${currentBook.ID_Livro}/${n}`, width: 100, height: 100, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); }
-        function openCarteirinhaModal(id) {
+       function openCarteirinhaModal(id) {
             const u = database.users.find(x => x.ID_Usuario === id); if(!u) return;
-            document.getElementById('card-nome').innerText = u.Nome_Completo; document.getElementById('card-id').innerText = u.ID_Usuario; document.getElementById('card-whatsapp').innerText = u.Telefone_WhatsApp; document.getElementById('card-email').innerText = u.Email; 
+            
+            document.getElementById('card-nome').innerText = u.Nome_Completo; 
+            document.getElementById('card-id').innerText = u.ID_Usuario; 
+            document.getElementById('card-whatsapp').innerText = u.Telefone_WhatsApp; 
+            document.getElementById('card-email').innerText = u.Email; 
+            
             const fotoUrl = u.Foto ? u.Foto : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='grey'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-3.3c-8-3.3z'/></svg>";
             document.getElementById('card-foto').style.backgroundImage = `url("${fotoUrl}")`;
-            const overlay = document.getElementById('card-overlay-img'); if(database.config.moldura) { overlay.src = database.config.moldura; overlay.style.display = 'block'; } else { overlay.style.display = 'none'; }            const qrContainer = document.getElementById('card-qr-container'); const qrTarget = document.getElementById('qrcode-canvas-user'); qrTarget.innerHTML = '';
-            if (database.config.showQRCarteirinha !== false) { qrContainer.style.display = 'flex'; new QRCode(qrTarget, { text: u.ID_Usuario, width: 55, height: 55, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.L }); } else { qrContainer.style.display = 'none'; }
-            const lArco = document.getElementById('card-logo-arco'); if(database.config.logoArco) { lArco.src = database.config.logoArco; lArco.style.display = 'block'; } else { lArco.style.display = 'none'; }
-            const lBib = document.getElementById('card-logo-biblio'); if(database.config.logoBiblio) { lBib.src = database.config.logoBiblio; lBib.style.display = 'block'; } else { lBib.style.display = 'none'; }
+            
+            const overlay = document.getElementById('card-overlay-img'); 
+            if(database.config.moldura) { 
+                overlay.src = database.config.moldura; 
+                overlay.style.display = 'block'; 
+            } else { 
+                overlay.style.display = 'none'; 
+            }            
+            
+            const qrContainer = document.getElementById('card-qr-container'); 
+            if (database.config.showQRCarteirinha !== false) { 
+                qrContainer.style.display = 'block'; 
+                JsBarcode("#barcode-canvas", u.ID_Usuario, { 
+                    format: "CODE128", 
+                    width: 2, 
+                    height: 35, 
+                    displayValue: false, 
+                    margin: 0,
+                    lineColor: "#000000"
+                }); 
+            } else { 
+                qrContainer.style.display = 'none'; 
+            }
+            
             document.getElementById('modal-carteirinha').classList.add('active');
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
@@ -1068,7 +1091,7 @@ async function processGeminiAnalysis(base64Data, mimeType) {
                 pdf.save(`${name}_${Date.now()}.pdf`); 
             }); 
         }
-        function exportCarteirinhaPDF() { html2canvas(document.getElementById('print-carteirinha-target'), { scale: 3 }).then(canvas => { const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'cm', format: [10, 6.9] }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 10, 6.9); pdf.save(`Carteirinha_${document.getElementById('card-id').innerText}.pdf`); }); }
+        function exportCarteirinhaPDF() { html2canvas(document.getElementById('print-carteirinha-target'), { scale: 3 }).then(canvas => { const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'cm', format: [9.5, 6.9] }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 9.5, 6.9); pdf.save(`Carteirinha_${document.getElementById('card-id').innerText}.pdf`); }); }
         async function exportAllLabelsPDF() { 
             if(!currentBook) return; 
             const total = (currentBook.Qtd_Emprestimo || 0) + (currentBook.Qtd_Consulta || 0) + (currentBook.Qtd_Perdido || 0) || currentBook.Quantidade_Total; 
