@@ -546,10 +546,10 @@
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
-                if(data.users && data.users.length > 0) database.users = data.users;
-                if(data.books && data.books.length > 0) database.books = data.books;
-                if(data.loans && data.loans.length > 0) database.loans = data.loans;
-                if(data.sysAccess && data.sysAccess.length > 0) database.sysAccess = data.sysAccess;
+                if(data.users) database.users = data.users;
+                if(data.books) database.books = data.books;
+                if(data.loans) database.loans = data.loans;
+                if(data.sysAccess) database.sysAccess = data.sysAccess;
                 if(data.config && Object.keys(data.config).length > 0) { database.config = data.config; loadConfigAndApply(); }
                 syncDB();
                 updateDashboardCounters(); renderUsersTable(); renderBooksTable(); renderLoansSection(); renderSysUsersList();
@@ -611,70 +611,42 @@
         async function fileToBase64Promise(file) { return new Promise((res, rej) => { const r = new FileReader(); r.readAsDataURL(file); r.onload = () => res(r.result); r.onerror = e => rej(e); }); }
         async function analyzeCatalogCard() { const fileInput = document.getElementById('ai-catalog-file'); if(!fileInput.files[0]) return alert("Selecione a foto."); const base64Str = await fileToBase64Promise(fileInput.files[0]); processGeminiAnalysis(base64Str.split(',')[1], fileInput.files[0].type); }
         
-        async function processGeminiAnalysis(base64Data, mimeType) {
+async function processGeminiAnalysis(base64Data, mimeType) {
             const apiKey = database.config.geminiKey; 
             if(!apiKey) { alert("Configure a API Key do Gemini nas Configurações."); switchTab('config'); return; }
             
             const status = document.getElementById('ai-status'); 
-            status.innerText = "Analisando ficha via Inteligência Artificial... Aguarde..."; 
+            status.innerText = "Conectando ao Google AI... Aguarde..."; 
             status.style.color = "#f39c12";
             
             try {
-                const prompt = `Você é um bibliotecário especialista. Extraia os dados da ficha catalográfica e retorne EXATAMENTE um JSON puro, sem marcações ou crases (NÃO use \`\`\`json), sem explicações extras, APENAS o objeto: {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`;
-                
-                const bodyPayload = {
-                    contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }],
-                    safetySettings: [
-                        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-                        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
-                    ]
-                };
+                const prompt = `Extraia os dados desta ficha catalográfica. Retorne APENAS um objeto JSON limpo: {"titulo": "...", "autor": "...", "editora": "...", "ano": "...", "isbn": "...", "categoria": "..."}`;
+                const bodyPayload = { contents: [{ parts: [ { text: prompt }, { inlineData: { mimeType: mimeType, data: base64Data } } ] }] };
 
                 const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, { 
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, 
-                    body: JSON.stringify(bodyPayload) 
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyPayload) 
                 });
                 
                 const result = await res.json(); 
-                
                 if(result.error) throw new Error(result.error.message);
-                if(!result.candidates || result.candidates.length === 0) {
-                    throw new Error("Bloqueio da Google ou Imagem Ilegível. Detalhes: " + JSON.stringify(result));
-                }
+                if(!result.candidates) throw new Error("A IA não conseguiu ler a imagem. Tente uma foto mais clara.");
                 
-                let txt = result.candidates[0].content.parts[0].text; 
-                txt = txt.replace(/```json/g, '').replace(/```/g, '').trim(); 
-                
-                let data;
-                try { data = JSON.parse(txt); } catch(err) { throw new Error("A IA leu a foto, mas gerou um formato inválido:\n" + txt); }
+                let txt = result.candidates[0].content.parts[0].text.replace(/```json/g, '').replace(/```/g, '').trim(); 
+                let data = JSON.parse(txt);
                 
                 document.getElementById('l-titulo').value = data.titulo || ''; 
                 document.getElementById('l-autor').value = data.autor || ''; 
                 document.getElementById('l-editora').value = data.editora || ''; 
                 document.getElementById('l-ano').value = data.ano ? data.ano.toString().replace(/\D/g, '') : ''; 
                 document.getElementById('l-isbn').value = data.isbn || '';
-                
                 if(data.categoria) { 
                     const catSelect = document.getElementById('l-categoria'); 
-                    if(!Array.from(catSelect.options).some(o => o.value === data.categoria)) { 
-                        database.customOptions.categoria.push(data.categoria); 
-                        syncDB(); populateDynamicDropdowns(); 
-                    } 
+                    if(!Array.from(catSelect.options).some(o => o.value === data.categoria)) { database.customOptions.categoria.push(data.categoria); syncDB(); populateDynamicDropdowns(); } 
                     catSelect.value = data.categoria; 
                 }
-                
-                status.innerText = "✨ Dados extraídos! Confira abaixo."; 
-                status.style.color = "#18BC9C";
-                const btn = document.getElementById('btn-submit-book'); 
-                btn.innerText = "CONFIRMAR E INCLUIR NOVO LIVRO?"; 
-                btn.classList.add('active');
-            } catch(e) { 
-                console.error("Erro IA:", e); 
-                status.innerText = "Erro Detalhado: " + e.message; 
-                status.style.color = "#e74c3c"; 
-            }
+                status.innerText = "✨ Dados extraídos!"; status.style.color = "#18BC9C";
+                const btn = document.getElementById('btn-submit-book'); btn.innerText = "CONFIRMAR E INCLUIR NOVO LIVRO?"; btn.classList.add('active');
+            } catch(e) { status.innerText = "Erro: " + e.message; status.style.color = "#e74c3c"; }
         }
         function buscarCEP(cep) { let cepLimpo = cep.replace(/\D/g, ''); if (cepLimpo.length === 8) { document.getElementById('cep-feedback').innerText = "Buscando..."; document.getElementById('cep-feedback').style.color = "#f39c12"; fetch(`https://viacep.com.br/ws/${cepLimpo}/json/`).then(res => res.json()).then(data => { if (!data.erro) { document.getElementById('u-rua').value = data.logradouro; document.getElementById('u-bairro').value = data.bairro; document.getElementById('u-cidade').value = data.localidade; document.getElementById('u-estado').value = data.uf; document.getElementById('cep-feedback').innerText = "Encontrado!"; document.getElementById('cep-feedback').style.color = "#18BC9C"; } else { document.getElementById('cep-feedback').innerText = "Não localizado."; document.getElementById('cep-feedback').style.color = "#e74c3c"; } }).catch(err => { document.getElementById('cep-feedback').innerText = "Erro."; document.getElementById('cep-feedback').style.color = "#e74c3c"; }); } }
 
@@ -766,8 +738,10 @@
         }
         function editUser(id) { const u = database.users.find(x => x.ID_Usuario === id); if(!u) return; document.getElementById('editing-user-id').value = id; document.getElementById('form-user-title').innerText = "Editar Usuário Existente"; document.getElementById('btn-submit-user').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-user').classList.add('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'inline-block'; document.getElementById('u-nome').value = u.Nome_Completo; document.getElementById('u-email').value = u.Email; document.getElementById('u-whatsapp').value = u.Telefone_WhatsApp; document.getElementById('u-cep').value = u.Endereco_CEP; document.getElementById('u-rua').value = u.Endereco_Rua; document.getElementById('u-numero').value = u.Endereco_Numero; document.getElementById('u-bairro').value = u.Endereco_Bairro; document.getElementById('u-cidade').value = u.Endereco_Cidade; document.getElementById('u-estado').value = u.Endereco_Estado; const setD = (eid, v) => { const el = document.getElementById(eid); if(v && !Array.from(el.options).some(o=>o.value===v)){ const opt=document.createElement('option'); opt.value=v; opt.innerText=v; el.appendChild(opt);} el.value = v; }; setD('u-genero', u.Identidade_Genero); setD('u-orientacao', u.Orientacao_Sexual); setD('u-raca', u.Raca_Etnia); setD('u-escolaridade', u.Escolaridade); document.getElementById('u-cadunico').value = u.Programas_Governo_CADUnico; document.getElementById('u-nivel').value = u.Nivel_Acesso; document.getElementById('u-status').value = u.Status; window.scrollTo(0,0); }
         function cancelEditUser() { document.getElementById('editing-user-id').value = ''; document.getElementById('form-user-title').innerText = "Cadastrar Novo Usuário"; document.getElementById('btn-submit-user').innerText = "Cadastrar Usuário"; document.getElementById('btn-submit-user').classList.remove('btn-edit'); document.getElementById('btn-cancel-user').style.display = 'none'; document.getElementById('form-user').reset(); }
-        function renderUsersTable() { const t = document.getElementById('table-users-body'); const s = document.getElementById('search-user-input').value.toLowerCase(); t.innerHTML = ''; database.users.filter(u => u.Nome_Completo.toLowerCase().includes(s) || u.ID_Usuario.toLowerCase().includes(s)).forEach(u => { const img = u.Foto ? `<img class="row-avatar" src="${u.Foto}">` : `<div class="row-avatar" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${u.ID_Usuario}</td><td><strong>${u.Nome_Completo}</strong></td><td>${u.Telefone_WhatsApp}</td><td><span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span></td><td style="text-align:center; display:flex; gap:5px; justify-content:center;"><button class="btn btn-sm" style="background:#3498db;" onclick="openUserProfile('${u.ID_Usuario}')">👤 Perfil</button> <button class="btn btn-sm" onclick="openCarteirinhaModal('${u.ID_Usuario}')">🪪 Cartão</button> <button class="btn btn-sm btn-edit" onclick="editUser('${u.ID_Usuario}')">✏️ Editar</button></td></tr>`; }); }
+        function renderUsersTable() { const t = document.getElementById('table-users-body'); const s = document.getElementById('search-user-input').value.toLowerCase(); t.innerHTML = ''; database.users.filter(u => u.Nome_Completo.toLowerCase().includes(s) || u.ID_Usuario.toLowerCase().includes(s)).forEach(u => { const img = u.Foto ? `<img class="row-avatar" src="${u.Foto}">` : `<div class="row-avatar" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${u.ID_Usuario}</td><td><strong>${u.Nome_Completo}</strong></td><td>${u.Telefone_WhatsApp}</td><td><span class="badge ${u.Status==='Ativo'?'badge-ativo':'badge-atraso'}">${u.Status}</span></td><td style="text-align:center; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;"><button class="btn btn-sm" style="background:#3498db;" onclick="openUserProfile('${u.ID_Usuario}')">👤 Perfil</button> <button class="btn btn-sm" onclick="openCarteirinhaModal('${u.ID_Usuario}')">🪪 Cartão</button> <button class="btn btn-sm btn-edit" onclick="editUser('${u.ID_Usuario}')">✏️ Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteUser('${u.ID_Usuario}')">🗑️ Excluir</button></td></tr>`; }); }
         
+        async function deleteUser(id) { if(confirm("CUIDADO: Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este leitor?")) { const idx = database.users.findIndex(u => u.ID_Usuario === id); if(idx !== -1) { database.users.splice(idx, 1); await cloudSave('deleteUser', { ID_Usuario: id }); syncDB(); renderUsersTable(); updateDashboardCounters(); alert("Leitor excluído com sucesso!"); } } }
+
         function openUserProfile(id) {
             const u = database.users.find(x => x.ID_Usuario === id); if(!u) return;
             document.getElementById('perfil-foto').src = u.Foto ? u.Foto : "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='grey'><path d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-3.3c-8-3.3z'/></svg>";
@@ -796,8 +770,9 @@
         }
         function editBook(id) { const b = database.books.find(x => x.ID_Livro === id); if(!b) return; document.getElementById('editing-book-id').value = id; document.getElementById('form-book-title').innerText = "Editar Livro Existente"; document.getElementById('btn-submit-book').innerText = "Atualizar Cadastro"; document.getElementById('btn-submit-book').classList.add('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'inline-block'; document.getElementById('l-titulo').value = b.Titulo; document.getElementById('l-autor').value = b.Autor; document.getElementById('l-editora').value = b.Editora; document.getElementById('l-ano').value = b.Ano; const cat = document.getElementById('l-categoria'); if(b.Categoria && !Array.from(cat.options).some(o=>o.value===b.Categoria)){ const opt=document.createElement('option'); opt.value=b.Categoria; opt.innerText=b.Categoria; cat.appendChild(opt); } cat.value = b.Categoria; document.getElementById('l-isbn').value = b.ISBN; document.getElementById('l-quantidade').value = b.Quantidade_Total; window.scrollTo(0,0); }
         function cancelEditBook() { document.getElementById('editing-book-id').value = ''; document.getElementById('form-book-title').innerText = "Inserir Novo Livro"; document.getElementById('btn-submit-book').innerText = "Catalogar Obra"; document.getElementById('btn-submit-book').classList.remove('btn-edit'); document.getElementById('btn-cancel-book').style.display = 'none'; document.getElementById('form-book').reset(); }
-        function renderBooksTable() { const t = document.getElementById('table-books-body'); const s = document.getElementById('search-book-input').value.toLowerCase(); t.innerHTML = ''; database.books.filter(b => b.Titulo.toLowerCase().includes(s) || b.ID_Livro.toLowerCase().includes(s)).forEach(b => { const img = b.Foto_Capa ? `<img class="row-thumb" src="${b.Foto_Capa}">` : `<div class="row-thumb" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${b.ID_Livro}</td><td><strong>${b.Titulo}</strong></td><td>${b.Autor}</td><td><strong>${b.Estoque_Atual}</strong> / ${b.Quantidade_Total}</td><td style="text-align:center;"><button class="btn btn-sm btn-primary" onclick="openEtiquetaModal('${b.ID_Livro}')">🏷️ Etiqueta</button> <button class="btn btn-sm btn-edit" onclick="editBook('${b.ID_Livro}')">✏️ Editar</button></td></tr>`; }); }
-
+        function renderBooksTable() { const t = document.getElementById('table-books-body'); const s = document.getElementById('search-book-input').value.toLowerCase(); t.innerHTML = ''; database.books.filter(b => b.Titulo.toLowerCase().includes(s) || b.ID_Livro.toLowerCase().includes(s)).forEach(b => { const img = b.Foto_Capa ? `<img class="row-thumb" src="${b.Foto_Capa}">` : `<div class="row-thumb" style="background:#ccc;"></div>`; t.innerHTML += `<tr><td>${img}</td><td style="font-family:monospace; font-weight:bold;">${b.ID_Livro}</td><td><strong>${b.Titulo}</strong></td><td>${b.Autor}</td><td><strong>${b.Estoque_Atual}</strong> / ${b.Quantidade_Total}</td><td style="text-align:center; display:flex; gap:5px; justify-content:center; flex-wrap:wrap;"><button class="btn btn-sm btn-primary" onclick="openEtiquetaModal('${b.ID_Livro}')">🏷️ Etiqueta</button> <button class="btn btn-sm btn-edit" onclick="editBook('${b.ID_Livro}')">✏️ Editar</button> <button class="btn btn-sm btn-danger" onclick="deleteBook('${b.ID_Livro}')">🗑️ Excluir</button></td></tr>`; }); }
+        
+        async function deleteBook(id) { if(confirm("CUIDADO: Tem certeza que deseja EXCLUIR DEFINITIVAMENTE este livro?")) { const idx = database.books.findIndex(b => b.ID_Livro === id); if(idx !== -1) { database.books.splice(idx, 1); await cloudSave('deleteBook', { ID_Livro: id }); syncDB(); renderBooksTable(); updateDashboardCounters(); alert("Livro excluído com sucesso!"); } } }
         function setDefaultLoanDate() { const d = new Date(); d.setDate(d.getDate() + 7); document.getElementById('loan-data-previsao').value = d.toISOString().split('T')[0]; }
         function renderLoansSection() { 
             const uSel = document.getElementById('loan-usuario'); const bSel = document.getElementById('loan-livro'); 
@@ -831,6 +806,10 @@
             let loanObj = { ID_Emprestimo: lId, ID_Usuario: idU, ID_Livro: idB, Data_Retirada: today, Data_Prevista_Devolucao: dp, Status_Emprestimo: 'Ativo', Operador: op };
             database.loans.push(loanObj); database.fluxo.unshift({ data: today, operacao: 'SAÍDA (Empréstimo)', livro: b.Titulo, usuario: u.Nome_Completo, responsavel: op });
             await cloudSave('saveLoan', loanObj); await cloudSave('saveBook', b);
+            
+            // Dispara Email Invisível
+            if(u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Empréstimo - ${database.config.title || 'Biblioteca'}`, message: `Olá ${u.Nome_Completo},\n\nEste é o comprovante do seu empréstimo.\n\n📚 Obra: ${b.Titulo}\n📅 Retirada: ${today}\n⏳ Devolução Prevista: ${dp}\n\nLembre-se de devolver no prazo para evitar multas/bloqueios.\nBoa leitura!` }); }
+            
             syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); document.getElementById('form-loan').reset(); setDefaultLoanDate(); showComprovante('EMPRÉSTIMO DE LIVRO', u.Nome_Completo, u.ID_Usuario, b.Titulo, today, dp, null, op);
         }
         async function registerReturn(id) {
@@ -840,6 +819,9 @@
             l.Status_Emprestimo = 'Devolvido'; l.Data_Entrega_Real = today;
             database.fluxo.unshift({ data: today, operacao: 'ENTRADA (Devolução)', livro: b?b.Titulo:'-', usuario: u?u.Nome_Completo:'-', responsavel: op }); 
             await cloudSave('saveLoan', l); if(b) await cloudSave('saveBook', b);
+            
+            // Dispara Email Invisível
+            if(u && u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Devolução - ${database.config.title || 'Biblioteca'}`, message: `Olá ${u.Nome_Completo},\n\nConfirmamos a devolução do livro.\n\n📚 Obra: ${b?b.Titulo:'-'}\n📅 Data da Devolução: ${today}\n\nObrigado por cuidar do nosso acervo!` }); }
             
             syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); showComprovante('DEVOLUÇÃO DE LIVRO', u?u.Nome_Completo:'-', u?u.ID_Usuario:'-', b?b.Titulo:'-', l.Data_Retirada, l.Data_Prevista_Devolucao, today, op);
         }
@@ -892,7 +874,16 @@
         }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
         let scanner; function openScannerModal() { document.getElementById('modal-scanner').classList.add('active'); scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); scanner.render((t, r) => { closeScannerModal(); switchTab('emprestimos'); if (t.startsWith('USR-')) { document.getElementById('loan-usuario').value = t; alert("Leitor Selecionado!"); } else if (t.startsWith('LIV-')) { document.getElementById('loan-livro').value = t.split('/')[0]; alert("Obra Selecionada!"); } }, () => {}); } function closeScannerModal() { document.getElementById('modal-scanner').classList.remove('active'); if(scanner) scanner.clear(); }
-        function exportElementToPDF(eid, name) { html2canvas(document.getElementById(eid), { scale: 2 }).then(canvas => { const pdf = new window.jspdf.jsPDF('l', 'mm', 'a4'); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 15, 140, 85); pdf.save(`${name}_${Date.now()}.pdf`); }); }
+        function exportElementToPDF(eid, name) { 
+            html2canvas(document.getElementById(eid), { scale: 2 }).then(canvas => { 
+                const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4'); 
+                const imgData = canvas.toDataURL('image/png');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                pdf.addImage(imgData, 'PNG', 10, 15, pdfWidth - 20, pdfHeight - 30); 
+                pdf.save(`${name}_${Date.now()}.pdf`); 
+            }); 
+        }
         function exportCarteirinhaPDF() { html2canvas(document.getElementById('print-carteirinha-target'), { scale: 3 }).then(canvas => { const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'cm', format: [10, 6.9] }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 10, 6.9); pdf.save(`Carteirinha_${document.getElementById('card-id').innerText}.pdf`); }); }
         async function exportAllLabelsPDF() { if(!currentBook) return; const total = currentBook.Quantidade_Total; const pdf = new window.jspdf.jsPDF('l', 'mm', 'a4'); const target = document.getElementById('print-etiqueta-target'); const currCopy = document.getElementById('print-copy-num').value; for(let i=1; i<=total; i++) { document.getElementById('print-copy-num').value = i; updateEtiquetaQR(); await new Promise(r => setTimeout(r, 150)); const canvas = await html2canvas(target, { scale: 2 }); if(i > 1) pdf.addPage(); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 15, 110, 65); } pdf.save(`Etiquetas_${currentBook.ID_Livro}.pdf`); document.getElementById('print-copy-num').value = currCopy; updateEtiquetaQR(); }
     </script>
