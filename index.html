@@ -476,7 +476,7 @@
                                 <div style="display:grid; grid-template-columns: 1fr 120px 140px; gap:10px; align-items:center;">
                                     <span style="font-size:12px;">📶 Cód. Barras</span>
                                     <div style="display:flex; gap:5px;"><input type="number" id="cfg-p-bar-x" placeholder="X" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-p-bar-y" placeholder="Y" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
-                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-s-bar-w" placeholder="Espess." oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"><input type="number" id="cfg-s-bar-h" placeholder="Alt." oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;"></div>
+                                    <div style="display:flex; gap:5px;"><input type="number" id="cfg-s-bar-scale" placeholder="Escala Única" oninput="applyConfig()" style="width:100%; padding:6px; border:1px solid #ccc; border-radius:4px;" step="0.5" min="0.5"></div>
                                 </div>
                             </div>
                         </div>
@@ -543,7 +543,7 @@
     
     <div id="modal-comprovante" class="preview-overlay"><div class="preview-box"><div class="comprovante" id="print-comprovante-target"><h3 id="comp-tipo">Comprovante de Operação</h3><div class="comp-linha"><strong>Leitor:</strong> <span id="comp-user"></span></div><div class="comp-linha"><strong>Documento ID:</strong> <span id="comp-userid"></span></div><div class="comp-linha"><strong>Obra / Livro:</strong> <span id="comp-book"></span></div><div class="comp-linha"><strong>Operador Responsável:</strong> <span id="comp-operador"></span></div><div class="comp-linha"><strong>Data da Transação:</strong> <span id="comp-data-hoje"></span></div><div class="comp-linha"><strong>Devolução Prevista:</strong> <span id="comp-data-prev"></span></div><div class="comp-linha" id="comp-linha-ent" style="display:none; color:var(--secondary);"><strong>Data de Entrega Real:</strong> <span id="comp-data-ent"></span></div><div style="text-align:center; margin-top:20px; font-size:10px; color:#666;">Documento gerado pelo Sistema Arco Biblioteca.<br><span id="comp-system-date"></span></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-comprovante-target', 'Comprovante')">📄 Salvar Recibo</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-comprovante')">Fechar</button></div></div></div>
     
-    <div id="modal-etiqueta" class="preview-overlay"><div class="preview-box"><h3>Geração de Etiquetas Inteligentes</h3><div style="background:rgba(0,0,0,0.05); padding:10px; border-radius:4px; margin-bottom:15px; display:inline-flex; align-items:center; gap:10px;"><label style="font-weight:bold; font-size:13px;">Exemplar Nº:</label><input type="number" id="print-copy-num" value="1" min="1" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;" onchange="updateEtiquetaQR()"><span id="print-copy-total" style="font-size:13px;"> de X</span></div><div class="etiqueta-livro-wrapper"><div class="etiqueta-livro" id="print-etiqueta-target"><div class="etiqueta-info"><div><div class="etiqueta-header">Marca Arco / Biblioteca</div><div class="etiqueta-title" id="lbl-titulo">Título</div><div style="font-size:10px; color:#333; margin-top:2px;"><strong>Autor:</strong> <span id="lbl-autor"></span><br><strong>Editora:</strong> <span id="lbl-editora"></span> | <span id="lbl-ano"></span><br><strong>ISBN:</strong> <span id="lbl-isbn"></span></div></div><div class="etiqueta-id" id="lbl-id">ID</div></div><div class="etiqueta-qrcode-container"><div id="qrcode-canvas-book" style="width:100px; height:100px;"></div><div id="lbl-exemplar-id" style="font-size:9px; font-weight:bold; margin-top:4px;">Exemplar 1</div></div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-etiqueta-target', 'Etiqueta_Individual')">Baixar ESTA Etiqueta</button><button class="btn btn-sm" style="background:#8e44ad; color:#fff;" onclick="exportAllLabelsPDF()">Baixar TODAS (Lote)</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-etiqueta')">Fechar</button></div></div></div>
+    <div id="modal-etiqueta" class="preview-overlay"><div class="preview-box"><h3>Geração de Etiquetas Inteligentes</h3><div style="background:rgba(0,0,0,0.05); padding:10px; border-radius:4px; margin-bottom:15px; display:inline-flex; align-items:center; gap:10px;"><label style="font-weight:bold; font-size:13px;">Exemplar Nº:</label><input type="number" id="print-copy-num" value="1" min="1" style="width:60px; padding:5px; border:1px solid #ccc; border-radius:4px;" onchange="updateEtiquetaBarcode()"><span id="print-copy-total" style="font-size:13px;"> de X</span></div><div class="etiqueta-livro-wrapper"><div class="etiqueta-livro" id="print-etiqueta-target"><div class="etiqueta-info"><div><div class="etiqueta-header">Marca Arco / Biblioteca</div><div class="etiqueta-title" id="lbl-titulo">Título</div><div style="font-size:10px; color:#333; margin-top:2px;"><strong>Autor:</strong> <span id="lbl-autor"></span><br><strong>Editora:</strong> <span id="lbl-editora"></span> | <span id="lbl-ano"></span><br><strong>ISBN:</strong> <span id="lbl-isbn"></span></div></div><div class="etiqueta-id" id="lbl-id">ID</div></div><div class="etiqueta-qrcode-container"><canvas id="barcode-canvas-book" style="width:100%; max-height:40px;"></canvas><div id="lbl-exemplar-id" style="font-size:9px; font-weight:bold; margin-top:4px;">Exemplar 1</div></div></div></div><div class="preview-actions"><button class="btn btn-sm btn-primary" onclick="exportElementToPDF('print-etiqueta-target', 'Etiqueta_Individual')">Baixar ESTA Etiqueta</button><button class="btn btn-sm" style="background:#8e44ad; color:#fff;" onclick="exportAllLabelsPDF()">Baixar TODAS (Lote)</button><button class="btn btn-sm btn-danger" onclick="closeModal('modal-etiqueta')">Fechar</button></div></div></div>
     
     <div id="modal-carteirinha" class="preview-overlay"><div class="preview-box"><h3>Carteirinha Digital do Leitor</h3><div class="carteirinha-wrapper"><div class="carteirinha" id="print-carteirinha-target">
         <img id="card-overlay-img" class="carteirinha-moldura" style="display:none;">
@@ -773,9 +773,8 @@ function applyConfig() {
             r.setProperty('--s-tel', px(getVal('cfg-s-tel'), '13px'));
             r.setProperty('--s-mail', px(getVal('cfg-s-mail'), '11px'));
             
-            // Controle dinâmico do Código de Barras (Mais estreito e menor por padrão: 1 / 25)
-            const barW = getVal('cfg-s-bar-w') ? parseInt(getVal('cfg-s-bar-w')) : 1; 
-            const barH = getVal('cfg-s-bar-h') ? parseInt(getVal('cfg-s-bar-h')) : 25; 
+            // Proporção Travada do Código de Barras
+            const barScale = getVal('cfg-s-bar-scale') ? parseFloat(getVal('cfg-s-bar-scale')) : 1; 
 
             const titleEl = document.getElementById('system-title-display');
             if(titleEl) titleEl.innerText = getVal('cfg-title');
@@ -809,7 +808,7 @@ function applyConfig() {
             
             const previewCanvas = document.getElementById('preview-barcode-canvas');
             if(previewCanvas && typeof JsBarcode !== 'undefined') {
-                try { JsBarcode(previewCanvas, "USR-1A2B3C", { format: "CODE128", width: barW, height: barH, displayValue: false, margin: 0, lineColor: "#000000" }); } catch(e) {}
+                try { JsBarcode(previewCanvas, "USR-1A2B3C", { format: "CODE128", width: barScale, height: barScale * 30, displayValue: false, margin: 0, lineColor: "#000000" }); } catch(e) {}
             }
         }
 
@@ -849,7 +848,7 @@ function applyConfig() {
             setVal('cfg-s-id', c.sId || '');
             setVal('cfg-s-tel', c.sTel || '');
             setVal('cfg-s-mail', c.sMail || '');
-            setVal('cfg-s-bar-w', c.sBarW || ''); setVal('cfg-s-bar-h', c.sBarH || '');
+            setVal('cfg-s-bar-scale', c.sBarScale || ''); 
             
             applyConfig();
         }
@@ -879,7 +878,7 @@ function applyConfig() {
                 sId: getVal('cfg-s-id'),
                 sTel: getVal('cfg-s-tel'),
                 sMail: getVal('cfg-s-mail'),
-                sBarW: getVal('cfg-s-bar-w'), sBarH: getVal('cfg-s-bar-h')
+                sBarScale: getVal('cfg-s-bar-scale')
             }; 
             syncDB(); 
             await cloudSave('saveConfig', database.config);
@@ -1113,9 +1112,17 @@ function applyConfig() {
             if(dashTotLoans) dashTotLoans.innerText = totalHistorico;
         }
         let currentBook = null;
-        function openEtiquetaModal(id) { currentBook = database.books.find(x => x.ID_Livro === id); if(!currentBook) return; document.getElementById('lbl-titulo').innerText = currentBook.Titulo; document.getElementById('lbl-autor').innerText = currentBook.Autor; document.getElementById('lbl-editora').innerText = currentBook.Editora; document.getElementById('lbl-ano').innerText = currentBook.Ano; document.getElementById('lbl-isbn').innerText = currentBook.ISBN; document.getElementById('lbl-id').innerText = currentBook.ID_Livro; const cin = document.getElementById('print-copy-num'); cin.max = currentBook.Quantidade_Total; cin.value = 1; document.getElementById('print-copy-total').innerText = ` de ${currentBook.Quantidade_Total}`; updateEtiquetaQR(); document.getElementById('modal-etiqueta').classList.add('active'); }
-        function updateEtiquetaQR() { if(!currentBook) return; const n = document.getElementById('print-copy-num').value; document.getElementById('lbl-exemplar-id').innerText = `Exemplar ${n}`; const qrTarget = document.getElementById('qrcode-canvas-book'); qrTarget.innerHTML = ''; new QRCode(qrTarget, { text: `${currentBook.ID_Livro}/${n}`, width: 100, height: 100, colorDark: "#000", colorLight: "#fff", correctLevel: QRCode.CorrectLevel.H }); }
-    function openCarteirinhaModal(id) {
+        function openEtiquetaModal(id) { currentBook = database.books.find(x => x.ID_Livro === id); if(!currentBook) return; document.getElementById('lbl-titulo').innerText = currentBook.Titulo; document.getElementById('lbl-autor').innerText = currentBook.Autor; document.getElementById('lbl-editora').innerText = currentBook.Editora; document.getElementById('lbl-ano').innerText = currentBook.Ano; document.getElementById('lbl-isbn').innerText = currentBook.ISBN; document.getElementById('lbl-id').innerText = currentBook.ID_Livro; const cin = document.getElementById('print-copy-num'); cin.max = currentBook.Quantidade_Total; cin.value = 1; document.getElementById('print-copy-total').innerText = ` de ${currentBook.Quantidade_Total}`; updateEtiquetaBarcode(); document.getElementById('modal-etiqueta').classList.add('active'); }
+        
+        function updateEtiquetaBarcode() { 
+            if(!currentBook) return; 
+            const n = document.getElementById('print-copy-num').value; 
+            document.getElementById('lbl-exemplar-id').innerText = `Exemplar ${n}`; 
+            try { 
+                JsBarcode("#barcode-canvas-book", `${currentBook.ID_Livro}/${n}`, { format: "CODE128", width: 1.5, height: 40, displayValue: false, margin: 0, lineColor: "#000000" }); 
+            } catch(e){} 
+        }
+   function openCarteirinhaModal(id) {
             const u = database.users.find(x => x.ID_Usuario === id); if(!u) return;
             
             document.getElementById('card-nome').innerText = u.Nome_Completo; 
@@ -1138,14 +1145,13 @@ function applyConfig() {
             if (database.config.showQRCarteirinha !== false) { 
                 qrContainer.style.display = 'block'; 
                 
-                // Resgata o tamanho salvo ou usa o padrão fino (1/25)
-                const barW = database.config.sBarW ? parseInt(database.config.sBarW) : 1; 
-                const barH = database.config.sBarH ? parseInt(database.config.sBarH) : 25; 
+                // Resgata o tamanho salvo da Escala Unificada
+                const barScale = database.config.sBarScale ? parseFloat(database.config.sBarScale) : 1; 
                 
                 JsBarcode("#barcode-canvas", u.ID_Usuario, { 
                     format: "CODE128", 
-                    width: barW, 
-                    height: barH, 
+                    width: barScale, 
+                    height: barScale * 30, 
                     displayValue: false, 
                     margin: 0,
                     lineColor: "#000000"
@@ -1188,8 +1194,34 @@ function applyConfig() {
                 pdf.save(`${name}_${Date.now()}.pdf`); 
             }); 
         }
-        function exportCarteirinhaPDF() { html2canvas(document.getElementById('print-carteirinha-target'), { scale: 3 }).then(canvas => { const pdf = new window.jspdf.jsPDF({ orientation: 'landscape', unit: 'cm', format: [9.5, 6.9] }); pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 9.5, 6.9); pdf.save(`Carteirinha_${document.getElementById('card-id').innerText}.pdf`); }); }
-        async function exportAllLabelsPDF() { 
+        function exportCarteirinhaPDF() { 
+            // Scale: 5 força altíssima qualidade de resolução na foto e no código de barras
+            html2canvas(document.getElementById('print-carteirinha-target'), { scale: 5, useCORS: true, logging: false }).then(canvas => { 
+                const pdf = new window.jspdf.jsPDF({ orientation: 'portrait', unit: 'cm', format: 'a4' }); 
+                
+                // Textos do Cabeçalho
+                pdf.setFont("helvetica", "bold");
+                pdf.setFontSize(14);
+                pdf.text("Biblioteca Comunitária João Silvério Trevisan", 2, 2.5);
+                pdf.setFont("helvetica", "normal");
+                pdf.setFontSize(12);
+                pdf.text("ONG ARCO", 2, 3.2);
+                pdf.setFontSize(10);
+                pdf.setTextColor(100);
+                pdf.text("Data da impressão: " + new Date().toLocaleDateString('pt-BR'), 2, 3.8);
+                
+                // Linha de divisão elegante
+                pdf.setLineWidth(0.02);
+                pdf.setDrawColor(200);
+                pdf.line(2, 4.3, 19, 4.3);
+                
+                // Imagem de alta qualidade no tamanho rigoroso de 9.5 x 6.9cm
+                pdf.addImage(canvas.toDataURL('image/png', 1.0), 'PNG', 2, 5.5, 9.5, 6.9); 
+                
+                pdf.save(`Carteirinha_${document.getElementById('card-id').innerText}.pdf`); 
+            }); 
+        }
+   async function exportAllLabelsPDF() { 
             if(!currentBook) return; 
             const total = (currentBook.Qtd_Emprestimo || 0) + (currentBook.Qtd_Consulta || 0) + (currentBook.Qtd_Perdido || 0) || currentBook.Quantidade_Total; 
             const pdf = new window.jspdf.jsPDF('p', 'mm', 'a4'); 
@@ -1207,9 +1239,9 @@ function applyConfig() {
                 if(i <= limitEmp) tHeader.innerText = origHeader + " (EMPRÉSTIMO)";
                 else tHeader.innerText = origHeader + " (CONSULTA LOCAL)";
                 
-                updateEtiquetaQR(); 
+                updateEtiquetaBarcode(); 
                 await new Promise(r => setTimeout(r, 150)); 
-                const canvas = await html2canvas(target, { scale: 2 }); 
+                const canvas = await html2canvas(target, { scale: 3 }); 
                 
                 tHeader.innerText = origHeader; 
                 
@@ -1225,7 +1257,7 @@ function applyConfig() {
                 pdf.addImage(canvas.toDataURL('image/png'), 'PNG', x, y, 85, 50); 
             } 
             pdf.save(`Etiquetas_${currentBook.ID_Livro}.pdf`); 
-            document.getElementById('print-copy-num').value = currCopy; updateEtiquetaQR(); 
-        }    </script>
+            document.getElementById('print-copy-num').value = currCopy; updateEtiquetaBarcode(); 
+        }</script>
 </body>
 </html>
