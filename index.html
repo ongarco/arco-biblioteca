@@ -659,10 +659,8 @@
             // INTEGRAÇÃO NUVEM
             document.getElementById('cloud-loader').style.display = 'flex';
                 try {
-                // Blindagem Dupla: Força o navegador a ignorar o Service Worker e o Cache Local
-                const response = await fetch(API_URL + "?t=" + new Date().getTime(), { 
-                    cache: 'no-store' 
-                });
+                // Quebra de cache apenas pela URL (Evita o bloqueio de segurança CORS do Google)
+                const response = await fetch(API_URL + "?t=" + new Date().getTime());
                 
                 if (!response.ok) throw new Error("Erro na resposta da Planilha.");
                 const data = await response.json();
