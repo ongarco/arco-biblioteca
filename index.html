@@ -658,11 +658,8 @@
 
             // INTEGRAÇÃO NUVEM
             document.getElementById('cloud-loader').style.display = 'flex';
-                try {
-                // Quebra de cache apenas pela URL (Evita o bloqueio de segurança CORS do Google)
-                const response = await fetch(API_URL + "?t=" + new Date().getTime());
-                
-                if (!response.ok) throw new Error("Erro na resposta da Planilha.");
+            try {
+                const response = await fetch(API_URL);
                 const data = await response.json();
                               
                 // Força o espelhamento
@@ -675,10 +672,8 @@
                 syncDB();
                 updateDashboardCounters(); renderUsersTable(); renderBooksTable(); renderLoansSection(); renderSysUsersList();
                 
-                console.log(`Sincronizado da Nuvem: ${database.loans.length} Empréstimos lidos.`);
             } catch(e) {
-                console.warn("Erro de Nuvem:", e);
-                alert("Atenção: O sistema usou dados salvos no computador porque a comunicação com o Google Sheets falhou agora. Isso explica números antigos. Tente atualizar a página (Ctrl + F5).");
+                console.warn("Offline/Erro Nuvem: Utilizando dados locais.", e);
             } finally {
                 document.getElementById('cloud-loader').style.display = 'none';
             }
