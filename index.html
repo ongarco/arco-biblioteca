@@ -203,12 +203,12 @@
             <div class="dashboard-layout">
                 <div class="box-container" style="grid-column: span 2;">
                     <h3>Registro de Movimentação Diária (Logs)</h3>
-                    <div class="table-responsive" style="max-height: 450px; overflow-y: auto; display: block;">
-                    <table>
-                        <thead><tr><th>Foto</th><th>ID</th><th>Nome</th><th>Contato</th><th>Status</th><th style="text-align:center;">Ações</th></tr></thead>
-                        <tbody id="table-users-body"></tbody>
-                    </table>
-                </div>
+                    <div class="table-responsive">
+                        <table id="table-fluxo-diario">
+                            <thead><tr><th>Data</th><th>Operação</th><th>Livro</th><th>Leitor</th><th>Operador</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -273,7 +273,7 @@
                         <input type="text" id="search-user-input" placeholder="Buscar Nome/ID..." onkeyup="renderUsersTable()" style="padding:6px; border:1px solid #ccc; border-radius:4px; min-width:180px;">
                     </div>
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height: 450px; overflow-y: auto; display: block;">
                     <table>
                         <thead><tr><th>Foto</th><th>ID</th><th>Nome</th><th>Contato</th><th>Status</th><th style="text-align:center;">Ações</th></tr></thead>
                         <tbody id="table-users-body"></tbody>
