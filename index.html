@@ -203,12 +203,12 @@
             <div class="dashboard-layout">
                 <div class="box-container" style="grid-column: span 2;">
                     <h3>Registro de Movimentação Diária (Logs)</h3>
-                    <div class="table-responsive">
-                        <table id="table-fluxo-diario">
-                            <thead><tr><th>Data</th><th>Operação</th><th>Livro</th><th>Leitor</th><th>Operador</th></tr></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
+                    <div class="table-responsive" style="max-height: 450px; overflow-y: auto; display: block;">
+                    <table>
+                        <thead><tr><th>Foto</th><th>ID</th><th>Nome</th><th>Contato</th><th>Status</th><th style="text-align:center;">Ações</th></tr></thead>
+                        <tbody id="table-users-body"></tbody>
+                    </table>
+                </div>
                 </div>
             </div>
         </div>
@@ -320,7 +320,7 @@
                     <h3>Catálogo</h3>
                     <input type="text" id="search-book-input" placeholder="Buscar..." onkeyup="renderBooksTable()" style="padding:8px; border:1px solid #ccc; border-radius:4px;">
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive" style="max-height: 450px; overflow-y: auto; display: block;">
                     <table>
                         <thead><tr><th>Capa</th><th>ID Mestre</th><th>Obra</th><th>Autor</th><th>Estoque</th><th style="text-align:center;">Ações</th></tr></thead>
                         <tbody id="table-books-body"></tbody>
@@ -659,9 +659,10 @@
             // INTEGRAÇÃO NUVEM
             document.getElementById('cloud-loader').style.display = 'flex';
          try {
-                const response = await fetch(API_URL);
+                // Adiciona timestamp para forçar a quebra do cache do navegador e puxar os dados reais
+                const response = await fetch(API_URL + "?nocache=" + new Date().getTime());
                 const data = await response.json();
-                
+                              
                 // Força o espelhamento: se a nuvem estiver vazia, limpa o sistema
                 database.users = data.users || [];
                 database.books = data.books || [];
@@ -853,7 +854,7 @@ function applyConfig() {
             database.config = { 
                 title: getVal('cfg-title'), subtitle: getVal('cfg-subtitle'), 
                 showSubtitle: chk ? chk.checked : true, 
-                geminiKey: getVal('cfg-gemini-key').trim(), 
+                geminiKey: (getVal('cfg-gemini-key') || '').trim(), 
                 primary: getVal('cfg-c-primary'), secondary: getVal('cfg-c-secondary'), 
                 bg: getVal('cfg-c-bg'), panel: getVal('cfg-c-panel'), text: getVal('cfg-c-text'), htext: getVal('cfg-c-htext'), 
                 logo: getVal('cfg-logo'), banner: getVal('cfg-banner'), moldura: getVal('cfg-moldura'), 
@@ -873,9 +874,15 @@ function applyConfig() {
                 sMail: getVal('cfg-s-mail'),
                 sBarScale: getVal('cfg-s-bar-scale')
             }; 
-            syncDB(); 
-            await cloudSave('saveConfig', database.config);
-            alert('Identidade Visual Salva na Nuvem com Sucesso!'); 
+            
+            try {
+                syncDB(); 
+                await cloudSave('saveConfig', database.config);
+                alert('Identidade Visual Salva na Nuvem com Sucesso!'); 
+            } catch (error) {
+                console.error(error);
+                alert('Erro ao salvar. Isso ocorre geralmente se a imagem escolhida for muito pesada e estourar a memória. Tente comprimir a imagem antes de subir.');
+            }
         }
         async function saveUser(e) {
             e.preventDefault(); const editId = document.getElementById('editing-user-id').value;
@@ -1095,7 +1102,8 @@ function applyConfig() {
             showComprovante('EMPRÉSTIMO DE LIVRO', u.Nome_Completo, u.ID_Usuario, b.Titulo, today, dp, null, op);
         }
         async function registerReturn(id) {
-            const lIdx = database.loans.findIndex(x => x.ID_Emprestimo === id); if(lIdx === -1) return; const l = database.loans[lIdx]; const b = database.books.find(x => x.ID_Livro === l.ID_Livro); const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); 
+            const lIdx = database.loans.findIndex(x => x.ID_Emprestimo === id); if(lIdx === -1) return; 
+            const l = database.loans[lIdx]; const b = database.books.find(x => x.ID_Livro === l.ID_Livro); const u = database.users.find(x => x.ID_Usuario === l.ID_Usuario); 
             
             const today = new Date().toLocaleDateString('pt-BR'); const op = loggedInOperator || 'admin';
             l.Status_Emprestimo = 'Devolvido'; l.Data_Entrega_Real = today;
@@ -1106,13 +1114,17 @@ function applyConfig() {
             }
 
             database.fluxo.unshift({ data: today, operacao: 'ENTRADA (Devolução)', livro: b?b.Titulo:'-', usuario: u?u.Nome_Completo:'-', responsavel: op }); 
-            await cloudSave('saveLoan', l); if(b) await cloudSave('saveBook', b);
+            
+            // 1. Atualização Otimista: Salva localmente e atualiza a interface NA HORA
+            syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); 
+            showComprovante('DEVOLUÇÃO DE LIVRO', u?u.Nome_Completo:'-', u?u.ID_Usuario:'-', b?b.Titulo:'-', l.Data_Retirada, l.Data_Prevista_Devolucao, today, op);
+            
+            // 2. Salva na nuvem no plano de fundo
+            await cloudSave('saveLoan', l); 
+            if(b) await cloudSave('saveBook', b);
             
             const txtPolitica = "\n\nLembramos que o atraso gera multas de R$ 0,50 por dia e bloqueio de novas retiradas. Mantenha seu cadastro sempre em dia para continuar aproveitando a biblioteca!";
-
             if(u && u.Email) { await cloudSave('sendEmailReceipt', { email: u.Email, subject: `Comprovante de Devolução - ${database.config.title || 'Biblioteca Arco'}`, message: `Olá ${u.Nome_Completo},\n\nConfirmamos a devolução da obra.\n\n📚 Livro: ${b?b.Titulo:'-'}\n📅 Data da Devolução: ${today}${txtPolitica}\n\nObrigado por cuidar do nosso acervo!` }); }
-            
-            syncDB(); renderLoansSection(); renderBooksTable(); renderFluxoDiarioTable(); showComprovante('DEVOLUÇÃO DE LIVRO', u?u.Nome_Completo:'-', u?u.ID_Usuario:'-', b?b.Titulo:'-', l.Data_Retirada, l.Data_Prevista_Devolucao, today, op);
         }
         function showComprovante(tipo, userName, userId, bookName, dtRet, dtPrev, dtEnt, operador) { document.getElementById('comp-tipo').innerText = tipo; document.getElementById('comp-user').innerText = userName; document.getElementById('comp-userid').innerText = userId; document.getElementById('comp-book').innerText = bookName; document.getElementById('comp-operador').innerText = operador; document.getElementById('comp-data-hoje').innerText = dtRet; document.getElementById('comp-data-prev').innerText = dtPrev; document.getElementById('comp-system-date').innerText = new Date().toLocaleString('pt-BR'); const le = document.getElementById('comp-linha-ent'); if(dtEnt) { document.getElementById('comp-data-ent').innerText = dtEnt; le.style.display = 'flex'; } else { le.style.display = 'none'; } document.getElementById('modal-comprovante').classList.add('active'); }
         function renderFluxoDiarioTable() { 
@@ -1217,18 +1229,19 @@ function applyConfig() {
         function openScannerModal() { 
             document.getElementById('modal-scanner').classList.add('active'); 
             scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: {width: 250, height: 250} }, false); 
-            scanner.render((t, r) => { 
+       scanner.render((t, r) => { 
                 closeScannerModal(); 
-                if (t.startsWith('USR-')) { 
+                const code = t.trim(); // Remove espaços e quebras de linha invisíveis
+                if (code.startsWith('USR-')) { 
                     switchTab('usuarios'); 
-                    setTimeout(() => { openUserProfile(t); }, 200);
-                } else if (t.startsWith('LIV-')) { 
+                    setTimeout(() => { openUserProfile(code); }, 200);
+                } else if (code.startsWith('LIV-')) { 
                     switchTab('livros'); 
-                    setTimeout(() => { openBookProfile(t.split('/')[0]); }, 200);
+                    setTimeout(() => { openBookProfile(code.split('/')[0]); }, 200);
                 } else { 
-                    alert("QR Code não reconhecido pelo sistema."); 
+                    alert(`Código lido não reconhecido: ${code}`); 
                 } 
-            }, () => {}); 
+            }, () => {});
         } 
         function closeScannerModal() { 
             document.getElementById('modal-scanner').classList.remove('active'); 
