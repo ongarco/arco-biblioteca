@@ -658,7 +658,6 @@
 
             // INTEGRAÇÃO NUVEM
             document.getElementById('cloud-loader').style.display = 'flex';
-         try {
                 try {
                 // Blindagem Dupla: Força o navegador a ignorar o Service Worker e o Cache Local
                 const response = await fetch(API_URL + "?t=" + new Date().getTime(), { 
@@ -705,7 +704,36 @@
         }
         function handleLogout() { localStorage.removeItem('arco_login_session'); document.getElementById('login-screen').style.display = 'flex'; loggedInOperator = ''; }
         function switchTab(t) { document.querySelectorAll('.panel, nav button').forEach(e => e.classList.remove('active')); document.getElementById(`panel-${t}`).classList.add('active'); document.getElementById(`nav-${t}`).classList.add('active'); }
-        function processFileToBase64(el, targetId, callback) { const file = el.files[0]; if (file) { const reader = new FileReader(); reader.onload = function(e) { document.getElementById(targetId).value = e.target.result; if(callback) callback(); }; reader.readAsDataURL(file); } }
+        function processFileToBase64(el, targetId, callback) { 
+            const file = el.files[0]; 
+            if (!file) return; 
+            const reader = new FileReader(); 
+            reader.onload = function(e) { 
+                const img = new Image(); 
+                img.onload = function() { 
+                    const canvas = document.createElement('canvas'); 
+                    let w = img.width, h = img.height; 
+                    // Limita largura máxima (Banners=1920, Logos e Molduras=1080) mantendo a proporção
+                    const maxDim = (targetId.includes('banner') || targetId.includes('bg')) ? 1920 : 1080; 
+                    if (w > maxDim || h > maxDim) { 
+                        if (w > h) { h *= maxDim / w; w = maxDim; } 
+                        else { w *= maxDim / h; h = maxDim; } 
+                    } 
+                    canvas.width = w; canvas.height = h; 
+                    const ctx = canvas.getContext('2d'); 
+                    ctx.drawImage(img, 0, 0, w, h); 
+                    
+                    // Comprime JPG para 70% de qualidade. Mantém PNG como PNG para preservar a transparência (ex: molduras).
+                    const mime = file.type === 'image/png' ? 'image/png' : 'image/jpeg'; 
+                    const quality = mime === 'image/jpeg' ? 0.7 : undefined; 
+                    document.getElementById(targetId).value = canvas.toDataURL(mime, quality); 
+                    
+                    if(callback) callback(); 
+                }; 
+                img.src = e.target.result; 
+            }; 
+            reader.readAsDataURL(file); 
+        }
 
         function syncDB() {
             localStorage.setItem('arco_db_users_v7', JSON.stringify(database.users)); localStorage.setItem('arco_db_books_v7', JSON.stringify(database.books)); localStorage.setItem('arco_db_loans_v7', JSON.stringify(database.loans)); localStorage.setItem('arco_db_fluxo_v7', JSON.stringify(database.fluxo)); localStorage.setItem('arco_db_options_v7', JSON.stringify(database.customOptions)); localStorage.setItem('arco_db_sys_v7', JSON.stringify(database.sysAccess)); localStorage.setItem('arco_db_config_v7', JSON.stringify(database.config)); updateDashboardCounters();
